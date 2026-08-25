@@ -1050,7 +1050,7 @@
     const db = firebase.database();
     const gameStateRef = db.ref('mlb_live_game_state');
 
-    // 2. 預設標準卡片資訊，供校正同步
+    // 2. 預設標準卡片資訊，校正盜壘成功說明：若答對5桌(含)以上，直接偷取敵隊 3 分
     const defaultRedCards = [
         { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
         { id: 'r2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
@@ -1272,7 +1272,7 @@
                         if (data.showCardNotice === undefined) data.showCardNotice = false;
                         if (!data.lastRevealResult) data.lastRevealResult = null;
 
-                        // 2. 自動同步校正道具卡最新名稱與說明
+                        // 自動同步校正道具卡最新名稱與說明
                         if (data.redCards) {
                             data.redCards.forEach(c => {
                                 const def = defaultRedCards.find(d => d.id === c.id);
@@ -1305,6 +1305,7 @@
                 window.open(`${window.location.pathname}#${route}`, '_blank');
             };
 
+            // 玩家選桌鎖定與防呆
             const lockTable = () => {
                 const tableNum = selectedMobileTable.value;
                 const tableFormatted = `#${tableNum < 10 ? '0' + tableNum : tableNum}`;
@@ -1320,10 +1321,14 @@
                 }
 
                 isTableLocked.value = true;
-                gameState.connectedTables.push(tableNum);
+                const newConnected = [...gameState.connectedTables, tableNum];
                 localStorage.setItem('my_locked_table', tableNum); 
-                systemMessage.value = `${tableFormatted} 桌已成功鎖定代表身份！`;
-                broadcastState();
+                
+                // 採用精密更新，避免干擾倒數計時
+                const updates = {};
+                updates['mlb_live_game_state/connectedTables'] = newConnected;
+                updates['mlb_live_game_state/systemMessage'] = `${tableFormatted} 桌已成功鎖定代表身份！`;
+                db.ref().update(updates);
             };
 
             const unlockSpecificTable = (tableNum) => {
@@ -1339,7 +1344,7 @@
                 broadcastState();
             };
 
-            // 控制切換階段 (類別與戰術卡預設暫停 15 秒，需手動點擊按鈕開啟倒數)
+            // 控制切換階段
             const setPhase = (phase) => {
                 gameState.phase = phase;
                 stopTimer();
@@ -1486,7 +1491,7 @@
                 broadcastState();
             };
 
-            // 1. 出題按鈕按下後，無須手動按倒數，直接出題並自動倒數計時 30 秒
+            // 1. 核心修改：控台「出題與倒數」按下後，直接出題並自動啟動 30s 倒數
             const startQuestionPhase = () => {
                 gameState.showCardNotice = false;
 
@@ -1496,7 +1501,7 @@
                 }
 
                 if (!gameState.activeCards[gameState.activeTeam]) {
-                    confirmCardVote(false); // 避免出題時彈出卡片公告圖卡
+                    confirmCardVote(false); // 避免出題時彈出卡片宣告圖卡
                 }
                 
                 const targetCat = gameState.selectedCategory;
@@ -1520,7 +1525,7 @@
                 gameState.usedQuestionIds.push(selectedQ.id);
                 gameState.timer = 30;
                 
-                // 核心修改：控台「出題」按下後，直接開啟 30s 倒數！
+                // 自動啟動 30 秒倒數
                 startTimer();
                 systemMessage.value = `【${targetCat}】第 ${currentRoundNumber.value} 題開放！作答倒數 30 秒中...`;
                 broadcastState();
@@ -1601,11 +1606,13 @@
                 }
             };
 
+            // 採用精密更新，避免手機端干擾倒數計時
             const submitMobileAnswer = (key) => {
                 const tableKey = 'table_' + selectedMobileTable.value;
-                gameState.answers[tableKey] = key;
-                systemMessage.value = `#0${selectedMobileTable.value} 桌代表成功提交答案 [${key}]！`;
-                broadcastState();
+                const updates = {};
+                updates['mlb_live_game_state/answers/' + tableKey] = key;
+                updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌代表成功提交答案 [${key}]！`;
+                db.ref().update(updates);
             };
 
             const voteCategory = (cat) => {
@@ -1613,10 +1620,11 @@
                 if (gameState.tableVotes[tableKey]) return; 
 
                 if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
-                    gameState.categoryVotes[cat]++;
-                    gameState.tableVotes[tableKey] = true; 
-                    systemMessage.value = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
-                    broadcastState();
+                    const updates = {};
+                    updates['mlb_live_game_state/categoryVotes/' + cat] = (gameState.categoryVotes[cat] || 0) + 1;
+                    updates['mlb_live_game_state/tableVotes/' + tableKey] = true;
+                    updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
+                    db.ref().update(updates);
                 }
             };
 
@@ -1628,13 +1636,11 @@
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
                 if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
-                    if (!gameState.cardVotes[cardId]) {
-                        gameState.cardVotes[cardId] = 0;
-                    }
-                    gameState.cardVotes[cardId]++;
-                    gameState.tableCardVotes[tableKey] = cardId;
-                    systemMessage.value = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
-                    broadcastState();
+                    const updates = {};
+                    updates['mlb_live_game_state/cardVotes/' + cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+                    updates['mlb_live_game_state/tableCardVotes/' + tableKey] = cardId;
+                    updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
+                    db.ref().update(updates);
                 }
             };
 
