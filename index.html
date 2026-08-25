@@ -56,7 +56,42 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-<div id="app" class="flex-1 flex flex-col">
+<div id="app" class="flex-1 flex flex-col relative">
+
+    <!-- 戰術卡宣佈彈出圖卡 (Stage Screen & Mobile Pop-up Modal) -->
+    <div v-if="gameState.showCardNotice" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-b from-slate-900 via-mlbDark to-slate-950 border-4 p-6 sm:p-8 rounded-3xl max-w-lg w-full text-center space-y-4 shadow-[0_0_60px_rgba(245,158,11,0.4)] relative overflow-hidden"
+             :class="gameState.activeTeam === 'red' ? 'border-red-500 shadow-red-900/50' : 'border-blue-500 shadow-blue-900/50'">
+            <div class="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow"
+                 :class="gameState.activeTeam === 'red' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'">
+                ⚡ 進攻方 {{ gameState.activeTeam === 'red' ? '紅隊' : '藍隊' }} 戰術宣言
+            </div>
+            
+            <div class="w-20 h-16 mx-auto bg-amber-500/10 border border-amber-400/40 rounded-2xl flex items-center justify-center text-amber-400 text-4xl my-2 shadow-inner">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+
+            <div>
+                <div class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">本輪確定發動戰術</div>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-300">
+                    {{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].name : '一般攻防 (不發動卡片)' }}
+                </h3>
+            </div>
+
+            <div class="text-xs sm:text-sm text-slate-200 bg-slate-950/90 p-4 rounded-xl border border-slate-800 leading-relaxed text-left">
+                <span class="text-amber-400 font-bold block mb-1">【戰術效果說明】</span>
+                {{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].desc : '標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣。' }}
+            </div>
+
+            <!-- 按鈕僅在控台頁面 (#admin) 顯示 -->
+            <button v-if="currentRoute === 'admin'" @click="closeCardNotice" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i> 控台關閉通知
+            </button>
+            <div v-else class="text-xs text-amber-400/80 font-bold animate-pulse pt-2">
+                <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 請等候主持人控台推進下一階段...
+            </div>
+        </div>
+    </div>
 
     <!-- Global Top Navigation Bar -->
     <header v-if="currentRoute === '' || currentRoute === 'hub' || currentRoute === 'admin'" class="bg-mlbDark border-b border-gray-800 px-4 py-2 sticky top-0 z-50 flex flex-wrap items-center justify-between shadow-lg">
@@ -195,12 +230,12 @@
                         <div class="inline-block bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 mb-2">
                             <span class="text-xs text-slate-400 font-oswald uppercase tracking-widest">ROUND / 局數</span>
                             <div class="text-xl sm:text-2xl font-oswald font-bold text-amber-400">
-                                NO. {{ gameState.currentQuestionIndex + 1 }} / {{ questions.length }}
+                                NO. {{ currentRoundNumber }} / {{ questions.length }}
                             </div>
                         </div>
                         <div class="my-1">
                             <div class="text-3xl sm:text-5xl font-oswald font-black tracking-widest"
-                                 :class="gameState.timer <= 10 ? 'text-red-500 animate-pulse' : 'text-white'">
+                                 :class="gameState.timer <= 5 ? 'text-red-500 animate-pulse' : 'text-white'">
                                 00:{{ gameState.timer < 10 ? '0' + gameState.timer : gameState.timer }}
                             </div>
                         </div>
@@ -233,8 +268,8 @@
                 </div>
                 <div class="mt-4 bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
                     <div class="h-full timer-bar" 
-                         :style="{ width: (gameState.timer / 30 * 100) + '%' }"
-                         :class="gameState.timer > 10 ? 'bg-emerald-500' : 'bg-red-500'"></div>
+                         :style="{ width: (gameState.timer / (gameState.phase === 'QUESTION' ? 30 : 15) * 100) + '%' }"
+                         :class="gameState.timer > 5 ? 'bg-emerald-500' : 'bg-red-500'"></div>
                 </div>
             </div>
 
@@ -267,7 +302,7 @@
                 <!-- PHASE: CATEGORY_VOTE -->
                 <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-3xl text-center space-y-6">
                     <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1 rounded-full inline-block font-bold text-sm">
-                        <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別
+                        <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
                     </div>
                     <h2 class="text-3xl font-bold text-white">本輪題目類別票選中</h2>
 
@@ -307,46 +342,48 @@
                         ⚡ 出現同票！系統已從同票最高類別中隨機決選【{{ gameState.selectedCategory }}】
                     </div>
                     
-                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 p-6 rounded-2xl max-w-xl mx-auto shadow-2xl mt-4"
+                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 p-6 sm:p-8 rounded-2xl max-w-3xl mx-auto shadow-2xl mt-4"
                          :class="gameState.activeTeam === 'red' ? 'border-red-500/50' : 'border-blue-500/50'">
-                        <div class="text-xs font-bold uppercase tracking-wider mb-3 flex justify-between items-center" :class="gameState.activeTeam === 'red' ? 'text-red-400' : 'text-blue-400'">
+                        <div class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-4 flex justify-between items-center" :class="gameState.activeTeam === 'red' ? 'text-red-400' : 'text-blue-400'">
                             <span>進攻方 {{ gameState.activeTeam === 'red' ? '紅隊' : '藍隊' }} 戰術卡小組票選狀況</span>
-                            <span class="text-[10px] text-amber-400 font-normal"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>小組投票中</span>
+                            <span class="text-xs text-amber-400 font-normal"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>小組投票中 (限時15秒)</span>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3 text-left">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" 
-                                 class="bg-slate-900 p-3 rounded-xl border flex justify-between items-center"
-                                 :class="(gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === card.id) ? 'border-amber-400 ring-1 ring-amber-400' : 'border-slate-800'">
-                                <div>
-                                    <div class="text-xs font-bold text-white">{{ card.name.split(' ')[0] }}</div>
-                                    <div class="text-[10px] text-slate-400 truncate max-w-[120px]">{{ card.desc }}</div>
+                                 class="bg-slate-900 p-4 rounded-xl border flex justify-between items-start gap-3"
+                                 :class="(gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === card.id) ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-800'">
+                                <div class="flex-1">
+                                    <div class="text-sm sm:text-base font-bold text-white">{{ card.name }}</div>
+                                    <div class="text-xs text-slate-300 mt-1 leading-normal">{{ card.desc }}</div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xl font-oswald font-bold text-amber-400">{{ gameState.cardVotes[card.id] || 0 }}</span>
+                                <div class="text-right shrink-0 min-w-[50px] bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                                    <span class="text-2xl font-oswald font-bold text-amber-400">{{ gameState.cardVotes[card.id] || 0 }}</span>
                                     <span class="text-[10px] text-slate-400 block">票</span>
                                 </div>
                             </div>
-                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center"
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-start gap-3"
                                  :class="(!gameState.activeCards[gameState.activeTeam] && gameState.cardVotes['none'] > 0) ? 'border-slate-600' : 'border-slate-800'">
-                                <div>
-                                    <div class="text-xs font-bold text-slate-300">不發動卡片</div>
-                                    <div class="text-[10px] text-slate-500">標準計分模式</div>
+                                <div class="flex-1">
+                                    <div class="text-sm sm:text-base font-bold text-slate-200">不發動卡片</div>
+                                    <div class="text-xs text-slate-400 mt-1 leading-normal">標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣</div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-xl font-oswald font-bold text-slate-400">{{ gameState.cardVotes['none'] || 0 }}</span>
+                                <div class="text-right shrink-0 min-w-[50px] bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                                    <span class="text-2xl font-oswald font-bold text-slate-400">{{ gameState.cardVotes['none'] || 0 }}</span>
                                     <span class="text-[10px] text-slate-400 block">票</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3 border-t border-slate-800/80 text-left bg-slate-900/60 p-3 rounded-xl">
-                            <div class="text-xs text-slate-400 font-bold mb-1 flex items-center justify-between">
-                                <span><i class="fa-solid fa-bullhorn text-amber-400 mr-1"></i>本輪確定發動戰術卡：</span>
-                                <span class="text-amber-300 font-bold">{{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].name : '無 (一般攻防)' }}</span>
+                        <!-- 戰術卡發動效果說明框 -->
+                        <div class="mt-4 pt-4 border-t border-slate-800/80 text-left bg-slate-900/90 p-4 rounded-xl shadow-inner">
+                            <div class="text-sm text-slate-400 font-bold mb-1 flex items-center justify-between">
+                                <span><i class="fa-solid fa-bullhorn text-amber-400 mr-1.5 text-base"></i>本輪確定發動戰術卡：</span>
+                                <span class="text-amber-300 font-extrabold text-base sm:text-lg">{{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].name : '無 (一般攻防)' }}</span>
                             </div>
-                            <div class="text-xs text-slate-300 leading-relaxed">
-                                效果說明：{{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].desc : '標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣。' }}
+                            <div class="text-sm text-slate-200 leading-relaxed pt-1.5 border-t border-slate-800/60 mt-1">
+                                <span class="text-amber-400 font-bold">卡片效果說明：</span>
+                                {{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].desc : '標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣。' }}
                             </div>
                         </div>
                     </div>
@@ -359,7 +396,7 @@
                             <i class="fa-solid fa-list-check mr-1.5"></i> {{ currentQuestion.category }}
                         </span>
                         <span class="text-xs text-slate-400 font-oswald">
-                            題號 {{ gameState.currentQuestionIndex + 1 }} / {{ questions.length }}
+                            題號 {{ currentRoundNumber }} / {{ questions.length }}
                         </span>
                     </div>
 
@@ -397,25 +434,27 @@
                         </div>
                     </div>
 
-                    <div v-if="gameState.phase === 'REVEAL'" class="space-y-3 mt-4">
-                        <div v-if="gameState.lastRevealResult" class="bg-slate-900/95 border-2 border-amber-400/80 p-4 rounded-xl text-center shadow-2xl space-y-2">
-                            <div class="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-trophy"></i> 本題攻防戰報結算
+                    <!-- 揭曉答案戰報結算專區 -->
+                    <div v-if="gameState.phase === 'REVEAL'" class="space-y-4 mt-4">
+                        <div v-if="gameState.lastRevealResult" class="bg-slate-900/95 border-2 border-amber-400 p-5 rounded-2xl text-center shadow-2xl space-y-3">
+                            <div class="text-sm font-extrabold text-amber-400 uppercase tracking-wider flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-trophy text-lg"></i> 本題攻防戰報結算 (主持人解說區)
                             </div>
-                            <div class="grid grid-cols-3 gap-2 py-2 items-center">
-                                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-                                    <span class="text-[10px] text-slate-400 block">答對桌數</span>
-                                    <span class="text-xl font-oswald font-bold text-emerald-400">{{ gameState.lastRevealResult.correctCount }} / 10 桌</span>
+                            <div class="grid grid-cols-3 gap-4 py-2 items-center">
+                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                    <span class="text-xs text-slate-400 block mb-1">進攻方答對桌數</span>
+                                    <span class="text-2xl font-oswald font-bold text-emerald-400">{{ gameState.lastRevealResult.correctCount }} / 10 桌</span>
                                 </div>
-                                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-                                    <span class="text-[10px] text-slate-400 block">道具卡發動狀態</span>
-                                    <span class="text-xs font-bold block mt-1" :class="gameState.lastRevealResult.statusType === 'success' ? 'text-amber-400' : (gameState.lastRevealResult.statusType === 'fail' ? 'text-red-400' : 'text-slate-300')">
+                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                    <span class="text-xs text-slate-400 block mb-1">道具卡發動狀態</span>
+                                    <span class="text-sm sm:text-base font-extrabold block mt-1" :class="gameState.lastRevealResult.statusType === 'success' ? 'text-amber-400' : (gameState.lastRevealResult.statusType === 'fail' ? 'text-red-400' : 'text-slate-300')">
                                         {{ gameState.lastRevealResult.statusText }}
                                     </span>
                                 </div>
-                                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-                                    <span class="text-[10px] text-slate-400 block">得分變動</span>
-                                    <span class="text-xl font-oswald font-black text-amber-400">+{{ gameState.lastRevealResult.addedPoints }} 分</span>
+                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                    <span class="text-xs text-slate-400 block mb-1">本題得分變動</span>
+                                    <span class="text-2xl font-oswald font-black text-amber-400">+{{ gameState.lastRevealResult.addedPoints }} 分</span>
+                                    <span v-if="gameState.lastRevealResult.enemyDeduction > 0" class="text-xs text-red-400 block font-bold mt-0.5">(敵隊 -3 分)</span>
                                 </div>
                             </div>
                         </div>
@@ -565,13 +604,17 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1.5">30 秒計時器 (30s Timer)</label>
+                                <label class="text-xs text-amber-400 font-bold block mb-1.5">
+                                    <i class="fa-solid fa-stopwatch mr-1"></i>
+                                    {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : '30 秒答題計時器' }}
+                                </label>
                                 <div class="flex gap-2">
-                                    <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition">
-                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數' }}
+                                    <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded transition flex items-center justify-center gap-1 shadow-md">
+                                        <i class="fa-solid" :class="gameState.isTimerRunning ? 'fa-pause' : 'fa-play'"></i>
+                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + gameState.timer + 's)' }}
                                     </button>
                                     <button @click="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded">
-                                        重置 30s
+                                        重置
                                     </button>
                                 </div>
                             </div>
@@ -603,7 +646,7 @@
                                 </div>
                             </div>
 
-                            <button @click="confirmCardVote()" class="w-full py-2 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-xs rounded font-bold transition flex items-center justify-center gap-1.5">
+                            <button @click="confirmCardVote(true)" class="w-full py-2 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-xs rounded font-bold transition flex items-center justify-center gap-1.5">
                                 <i class="fa-solid fa-check-to-slot"></i> 結算卡片投票 (保護優先制)
                             </button>
 
@@ -612,7 +655,7 @@
                                 <div v-if="gameState.activeTeam === 'red'" class="space-y-1">
                                     <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded border border-slate-800 text-xs">
                                         <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
-                                        <button @click="useCard('red', card)" 
+                                        <button @click="useCard('red', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.red || gameState.activeCards.red.id !== card.id)"
                                                 :class="(gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-red-600 text-white')"
                                                 class="px-2 py-0.5 rounded text-[10px] font-bold">
@@ -623,7 +666,7 @@
                                 <div v-else class="space-y-1">
                                     <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded border border-slate-800 text-xs">
                                         <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
-                                        <button @click="useCard('blue', card)" 
+                                        <button @click="useCard('blue', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.blue || gameState.activeCards.blue.id !== card.id)"
                                                 :class="(gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white')"
                                                 class="px-2 py-0.5 rounded text-[10px] font-bold">
@@ -684,6 +727,33 @@
                     </div>
                 </div>
 
+                <!-- 20 桌連線狀態與控台一鍵解鎖管理 -->
+                <div class="mt-6 pt-6 border-t border-slate-800 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-300 flex justify-between items-center">
+                        <span><i class="fa-solid fa-users-gear mr-1.5 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
+                        <span class="text-xs text-slate-400 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-sm">{{ gameState.connectedTables.length }}</strong> / 20 桌</span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-4 sm:grid-cols-10 gap-2">
+                        <div v-for="t in 20" :key="t" 
+                             class="bg-slate-950 p-2 rounded-xl border text-center transition flex flex-col justify-between"
+                             :class="gameState.connectedTables.includes(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
+                            <div class="font-oswald font-bold text-xs" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
+                                #{{ t < 10 ? '0'+t : t }}
+                            </div>
+                            <div class="mt-1.5">
+                                <button v-if="gameState.connectedTables.includes(t)" 
+                                        @click="unlockSpecificTable(t)"
+                                        title="點擊此按鈕強制解鎖此桌，讓玩家重新選桌"
+                                        class="w-full text-[10px] bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                                    <i class="fa-solid fa-lock"></i> 解鎖
+                                </button>
+                                <span v-else class="text-[10px] text-slate-600 block py-1 font-mono">未鎖定</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Live Submissions Table -->
                 <div class="mt-6 pt-6 border-t border-slate-800">
                     <h3 class="text-sm font-bold text-slate-300 mb-3 flex justify-between items-center">
@@ -731,7 +801,7 @@
                     </button>
                 </div>
                 <p v-if="isTableLocked" class="text-[10px] text-slate-400 text-center">
-                    <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>桌號已鎖定，如需解鎖請通知主持人重置系統。
+                    <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>桌號已鎖定，如需更改請通知主持人為您解鎖。
                 </p>
             </div>
 
@@ -764,6 +834,7 @@
                         </p>
                     </div>
 
+                    <!-- 類別投票階段 (15秒倒數與逾時鎖定) -->
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -777,14 +848,25 @@
                             <h3 class="text-xl font-bold text-white">投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成本輪投票，請等待大螢幕揭曉結果！</p>
                         </div>
+                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                            <i class="fa-solid fa-hourglass-end text-5xl text-red-500 mb-2 animate-bounce"></i>
+                            <h3 class="text-xl font-bold text-red-400">投票時間已結束</h3>
+                            <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
+                        </div>
                         <div v-else>
-                            <div class="text-center mb-2">
+                            <div class="text-center mb-2 flex justify-between items-center px-1">
                                 <span class="text-xs text-amber-400 font-bold">請票選本局題目類別</span>
+                                <span class="text-xs font-oswald text-amber-400 font-bold">
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                </span>
                             </div>
+                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-lg border border-amber-800/60 mb-3 animate-pulse">
+                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
+                            </p>
                             <div v-for="cat in categories" :key="cat" class="w-full mb-3">
                                 <button @click="voteCategory(cat)" 
-                                        :disabled="categoryRemaining[cat] === 0"
-                                        :class="categoryRemaining[cat] === 0 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500'"
+                                        :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0"
+                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500'"
                                         class="w-full py-3 border text-white rounded-xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
                                     <span :class="{ 'line-through text-slate-500': categoryRemaining[cat] === 0 }">
                                         <i class="fa-solid fa-tag mr-2" :class="categoryRemaining[cat] === 0 ? 'text-slate-600' : 'text-amber-400'"></i> {{ cat }}
@@ -801,6 +883,7 @@
                         </div>
                     </div>
 
+                    <!-- CARD_PLAY 階段手機端票選戰術卡介面 (15秒倒數與逾時鎖定) -->
                     <div v-else-if="gameState.phase === 'CARD_PLAY'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -814,74 +897,94 @@
                             <h3 class="text-xl font-bold text-white">戰術卡投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成戰術卡小組投票，請等待主持人揭曉！</p>
                         </div>
+                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                            <i class="fa-solid fa-hourglass-end text-5xl text-purple-400 mb-2 animate-bounce"></i>
+                            <h3 class="text-xl font-bold text-purple-300">戰術卡投票時間已結束</h3>
+                            <p class="text-xs text-slate-400">表單已鎖定，請等待主持人結算！</p>
+                        </div>
                         <div v-else class="space-y-2">
-                            <div class="text-center mb-1">
-                                <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請小組票選本輪發動之戰術卡</span>
+                            <div class="text-center mb-1 flex justify-between items-center px-1">
+                                <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請小組票選本輪戰術卡</span>
+                                <span class="text-xs font-oswald text-purple-300 font-bold">
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                </span>
                             </div>
+                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-purple-300/90 text-center bg-purple-950/40 p-2 rounded-lg border border-purple-800/60 mb-2 animate-pulse">
+                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
+                            </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
                                 <button @click="voteCard(card.id)" 
-                                        class="w-full p-3 bg-slate-900 hover:bg-slate-800 border border-purple-500/50 hover:border-purple-400 text-white rounded-xl text-left transition shadow-md">
+                                        :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
+                                        :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400'"
+                                        class="w-full p-3 bg-slate-900 border text-white rounded-xl text-left transition shadow-md">
                                     <div class="font-bold text-xs text-amber-300 mb-0.5">{{ card.name }}</div>
                                     <div class="text-[10px] text-slate-300 leading-tight">{{ card.desc }}</div>
                                 </button>
                             </div>
                             <button @click="voteCard('none')" 
-                                    class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 rounded-xl text-xs font-bold transition">
+                                    :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
+                                    :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800'"
+                                    class="w-full py-2.5 bg-slate-900 border border-slate-700 text-slate-400 rounded-xl text-xs font-bold transition">
                                 不使用戰術卡 (一般攻防)
                             </button>
                         </div>
                     </div>
 
+                    <!-- QUESTION 階段手機端顯示完整題目與選項 -->
                     <div v-else-if="gameState.phase === 'QUESTION'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="space-y-3">
-                            <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-left space-y-1.5">
+                            <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-xl text-left space-y-2">
                                 <div class="flex justify-between items-center">
-                                    <span class="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    <span class="bg-slate-800 text-slate-400 text-xs font-bold px-2.5 py-0.5 rounded-full">
                                         <i class="fa-solid fa-shield-halved text-amber-400 mr-1"></i> 防守觀戰中
                                     </span>
-                                    <span class="text-[10px] text-slate-400 font-oswald">{{ currentQuestion.category }}</span>
+                                    <span class="text-xs text-slate-400 font-oswald">{{ currentQuestion.category }}</span>
                                 </div>
-                                <p class="text-xs font-bold text-slate-200 leading-snug whitespace-pre-line">{{ currentQuestion.question }}</p>
+                                <p class="text-sm sm:text-base font-bold text-slate-200 leading-relaxed whitespace-pre-line">{{ currentQuestion.question }}</p>
                             </div>
-                            <p class="text-center text-xs text-slate-500 pt-4">目前為敵方作答時間，請觀戰與準備下一輪。</p>
+                            <p class="text-center text-xs text-slate-500 pt-3">目前為敵方作答時間，請觀戰與準備下一輪。</p>
                         </div>
                         <div v-else class="space-y-3">
-                            <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl text-left space-y-1.5 shadow-md">
-                                <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block">
+                            <div class="bg-slate-900 border border-slate-700/80 p-3.5 rounded-xl text-left space-y-2 shadow-md">
+                                <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold px-2.5 py-0.5 rounded-full inline-block">
                                     <i class="fa-solid fa-list-check mr-1"></i> {{ currentQuestion.category }}
                                 </span>
-                                <p class="text-xs font-bold text-white leading-relaxed whitespace-pre-line">
+                                <p class="text-base font-bold text-white leading-relaxed whitespace-pre-line">
                                     {{ currentQuestion.question }}
                                 </p>
                             </div>
 
                             <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5">
-                                <span class="text-slate-400">請討論後按鍵送出答案：</span>
-                                <span class="text-amber-400 font-bold font-oswald">剩餘: 00:{{ gameState.timer < 10 ? '0'+gameState.timer : gameState.timer }}</span>
+                                <span class="text-slate-300 font-bold">請討論後按鍵送出答案：</span>
+                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ gameState.timer < 10 ? '0'+gameState.timer : gameState.timer }}</span>
                             </div>
                             
+                            <!-- HARD TIMEOUT LOCK UI -->
                             <div v-if="gameState.timer <= 0" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-hourglass-end text-4xl text-red-500 mb-1 animate-bounce"></i>
                                 <h3 class="text-lg font-bold text-red-400">作答時間已結束</h3>
                                 <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
                             </div>
+                            <!-- PAUSE LOCK UI -->
                             <div v-else-if="!gameState.isTimerRunning" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-pause text-4xl text-amber-500 mb-1"></i>
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
                                 <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
                             </div>
+                            <!-- SUCCESS SUBMIT UI -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border border-emerald-500/50 p-4 rounded-xl text-center space-y-2">
                                 <i class="fa-solid fa-circle-check text-2xl text-emerald-400"></i>
                                 <div class="text-sm font-bold text-emerald-300">答案已成功提交！</div>
                                 <div class="text-xs text-slate-300">選擇：<strong class="text-amber-400 font-oswald text-base">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
                                 <p class="text-[10px] text-slate-400 pt-1">已透過雲端同步給主持人與舞台大螢幕...</p>
                             </div>
+                            <!-- ANSWER BUTTONS WITH OPTION TEXT -->
                             <div v-else class="grid grid-cols-2 gap-2.5 pt-1">
                                 <button v-for="(optionText, key) in currentQuestion.options" :key="key"
                                         @click="submitMobileAnswer(key)"
-                                        class="py-3 px-2 bg-slate-900 hover:bg-slate-800 active:bg-blue-600 border-2 border-slate-700 active:border-blue-400 rounded-2xl text-white font-oswald transition shadow-lg flex flex-col items-center justify-center min-h-[68px]">
-                                    <span class="text-xl font-black" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
-                                    <span class="text-[11px] text-slate-300 font-noto text-center mt-0.5 leading-tight line-clamp-2">{{ optionText }}</span>
+                                        class="py-3.5 px-2.5 bg-slate-900 hover:bg-slate-800 active:bg-blue-600 border-2 border-slate-700 active:border-blue-400 rounded-2xl text-white font-oswald transition shadow-lg flex flex-col items-center justify-center min-h-[72px]">
+                                    <span class="text-2xl font-black" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
+                                    <span class="text-xs sm:text-sm text-slate-200 font-noto text-center mt-1 leading-snug line-clamp-2 font-medium">{{ optionText }}</span>
                                 </button>
                             </div>
                         </div>
@@ -947,6 +1050,18 @@
     const db = firebase.database();
     const gameStateRef = db.ref('mlb_live_game_state');
 
+    // 2. 預設標準卡片資訊，供校正同步
+    const defaultRedCards = [
+        { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
+        { id: 'r2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
+        { id: 'r3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，直接偷取敵隊 3 分', used: false }
+    ];
+    const defaultBlueCards = [
+        { id: 'b1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
+        { id: 'b2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
+        { id: 'b3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，直接偷取敵隊 3 分', used: false }
+    ];
+
     createApp({
         setup() {
             const currentRoute = ref('');
@@ -974,6 +1089,7 @@
                 sessionStorage.removeItem('mlb_admin_auth');
             };
 
+            // 題庫列表 (12 題)
             const questions = ref([
                 { 
                     id: 1, 
@@ -1092,6 +1208,7 @@
                 selectedCategory: null, 
                 isTieVote: false,
                 isScored: false,
+                showCardNotice: false,
                 lastRevealResult: null,
                 timer: 30,
                 isTimerRunning: false, 
@@ -1101,22 +1218,22 @@
                 tableCardVotes: {},      
                 tableVotes: {}, 
                 answers: {},
-                redCards: [
-                    { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
-                    { id: 'r2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
-                    { id: 'r3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，直接偷取敵隊 3 分', used: false }
-                ],
-                blueCards: [
-                    { id: 'b1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
-                    { id: 'b2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
-                    { id: 'b3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，直接偷取敵隊 3 分', used: false }
-                ]
+                redCards: JSON.parse(JSON.stringify(defaultRedCards)),
+                blueCards: JSON.parse(JSON.stringify(defaultBlueCards))
             });
 
             const systemMessage = ref('連線至 Firebase 雲端中...');
 
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
             const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
+
+            // 計算實際局數，確保大螢幕正確呈現 NO. 1 / 12, NO. 2 / 12 ...
+            const currentRoundNumber = computed(() => {
+                if (gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL') {
+                    return gameState.usedQuestionIds.length;
+                }
+                return Math.min(gameState.usedQuestionIds.length + 1, questions.value.length);
+            });
 
             const activeTeamTables = computed(() => {
                 return gameState.activeTeam === 'red' ? [1,2,3,4,5,6,7,8,9,10] : [11,12,13,14,15,16,17,18,19,20];
@@ -1152,7 +1269,22 @@
                         if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合題': 0 };
                         if (!data.activeCards) data.activeCards = { red: null, blue: null };
                         if (data.isScored === undefined) data.isScored = false;
+                        if (data.showCardNotice === undefined) data.showCardNotice = false;
                         if (!data.lastRevealResult) data.lastRevealResult = null;
+
+                        // 2. 自動同步校正道具卡最新名稱與說明
+                        if (data.redCards) {
+                            data.redCards.forEach(c => {
+                                const def = defaultRedCards.find(d => d.id === c.id);
+                                if (def) { c.name = def.name; c.desc = def.desc; }
+                            });
+                        }
+                        if (data.blueCards) {
+                            data.blueCards.forEach(c => {
+                                const def = defaultBlueCards.find(d => d.id === c.id);
+                                if (def) { c.name = def.name; c.desc = def.desc; }
+                            });
+                        }
 
                         Object.assign(gameState, data);
 
@@ -1174,20 +1306,43 @@
             };
 
             const lockTable = () => {
-                if (gameState.connectedTables.includes(selectedMobileTable.value)) {
-                    alert(`錯誤！桌號 #${selectedMobileTable.value < 10 ? '0'+selectedMobileTable.value : selectedMobileTable.value} 已被其他裝置登入鎖定。\n(若為誤觸，請通知工作人員重置系統)`);
+                const tableNum = selectedMobileTable.value;
+                const tableFormatted = `#${tableNum < 10 ? '0' + tableNum : tableNum}`;
+                const teamName = tableNum <= 10 ? '紅隊' : '藍隊';
+
+                if (gameState.connectedTables.includes(tableNum)) {
+                    alert(`錯誤！桌號 ${tableFormatted} 已被其他裝置登入鎖定。\n(若為誤觸，請通知工作人員為您解鎖)`);
+                    return;
+                }
+
+                if (!window.confirm(`【確認桌號設定】\n請確認您的座位是否為：${tableFormatted} 桌 (${teamName}代表)？\n\n按下確認後將正式鎖定代表身份！`)) {
                     return;
                 }
 
                 isTableLocked.value = true;
-                gameState.connectedTables.push(selectedMobileTable.value);
-                localStorage.setItem('my_locked_table', selectedMobileTable.value); 
-                systemMessage.value = `#0${selectedMobileTable.value} 桌已成功鎖定代表身份！`;
+                gameState.connectedTables.push(tableNum);
+                localStorage.setItem('my_locked_table', tableNum); 
+                systemMessage.value = `${tableFormatted} 桌已成功鎖定代表身份！`;
                 broadcastState();
             };
 
+            const unlockSpecificTable = (tableNum) => {
+                const tableFormatted = `#${tableNum < 10 ? '0' + tableNum : tableNum}`;
+                if (!window.confirm(`【主持人解鎖確認】\n確定要幫 ${tableFormatted} 桌解鎖代表身份嗎？\n解鎖後該桌手機將自動解除鎖定，並可重新選擇桌號。`)) {
+                    return;
+                }
+                const index = gameState.connectedTables.indexOf(tableNum);
+                if (index > -1) {
+                    gameState.connectedTables.splice(index, 1);
+                }
+                systemMessage.value = `主持人已解除 ${tableFormatted} 桌代表鎖定！`;
+                broadcastState();
+            };
+
+            // 控制切換階段 (類別與戰術卡預設暫停 15 秒，需手動點擊按鈕開啟倒數)
             const setPhase = (phase) => {
                 gameState.phase = phase;
+                stopTimer();
                 
                 if (phase === 'CATEGORY_VOTE') {
                     Object.keys(gameState.categoryVotes).forEach(key => gameState.categoryVotes[key] = 0);
@@ -1198,16 +1353,24 @@
                     gameState.selectedCategory = null; 
                     gameState.isTieVote = false;
                     gameState.isScored = false;
+                    gameState.showCardNotice = false;
                     gameState.lastRevealResult = null;
+                    gameState.timer = 15;
+                    gameState.isTimerRunning = false;
+                    systemMessage.value = `階段切換：類別投票。請主持人點擊「Start 啟動倒數」開放投票。`;
+                } else if (phase === 'CARD_PLAY') {
+                    gameState.timer = 15;
+                    gameState.isTimerRunning = false;
+                    systemMessage.value = `階段切換：戰術卡投票。請主持人點擊「Start 啟動倒數」開放投票。`;
+                } else if (phase === 'QUESTION') {
+                    gameState.showCardNotice = false;
+                    gameState.timer = 30;
+                    gameState.isTimerRunning = false;
+                    systemMessage.value = `階段切換：題目回答。`;
+                } else {
+                    systemMessage.value = `階段已切換至：${phase}`;
                 }
 
-                if (phase === 'QUESTION') {
-                    resetTimer();
-                    startTimer();
-                } else {
-                    stopTimer();
-                }
-                systemMessage.value = `階段已切換至：${phase}`;
                 broadcastState();
             };
 
@@ -1218,6 +1381,7 @@
             };
 
             const confirmCategory = () => {
+                stopTimer();
                 let maxVotes = -1;
                 const tiedCats = [];
                 
@@ -1244,13 +1408,16 @@
                 
                 gameState.cardVotes = { none: 0 };
                 gameState.tableCardVotes = {};
+                gameState.showCardNotice = false;
+                gameState.timer = 15;
+                gameState.isTimerRunning = false;
 
                 gameState.phase = 'CARD_PLAY';
 
                 if (tiedCats.length > 1) {
-                    systemMessage.value = `投票結算：【${tiedCats.join('與')}】同高票 (${maxVotes} 票)！系統隨機抽選【${winningCat}】！請進攻方小組投票或隊長選擇戰術卡片。`;
+                    systemMessage.value = `投票結算：【${tiedCats.join('與')}】同高票 (${maxVotes} 票)！隨機抽選【${winningCat}】！請主持人點擊啟動 15s 戰術卡投票倒數。`;
                 } else {
-                    systemMessage.value = `投票結算：【${winningCat}】以 ${maxVotes} 票最高票勝出！請進攻方小組投票或隊長選擇戰術卡片。`;
+                    systemMessage.value = `投票結算：【${winningCat}】以 ${maxVotes} 票勝出！請主持人點擊啟動 15s 戰術卡投票倒數。`;
                 }
 
                 broadcastState();
@@ -1259,10 +1426,11 @@
             const getActiveTeamAvailableCards = () => {
                 const team = gameState.activeTeam;
                 const cards = team === 'red' ? gameState.redCards : gameState.blueCards;
-                return cards.filter(c => !c.used || (gameState.activeCards[team] && gameState.activeCards[team].id === c.id));
+                return cards.filter(c => !c.used || (gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === c.id));
             };
 
-            const confirmCardVote = () => {
+            const confirmCardVote = (triggerNotice = true) => {
+                stopTimer();
                 const team = gameState.activeTeam;
                 const availableCards = getActiveTeamAvailableCards();
 
@@ -1303,21 +1471,32 @@
                 } else {
                     const selectedCard = availableCards.find(c => c.id === winningCardId);
                     if (selectedCard) {
-                        useCard(team, selectedCard);
+                        useCard(team, selectedCard, triggerNotice);
                         systemMessage.value = `戰術卡結算：${team === 'red' ? '紅隊' : '藍隊'} ${topOptions.length > 1 ? '同票亂數決選，發動' : '發動'}【${selectedCard.name}】！`;
                     }
+                }
+                if (triggerNotice) {
+                    gameState.showCardNotice = true;
                 }
                 broadcastState();
             };
 
+            const closeCardNotice = () => {
+                gameState.showCardNotice = false;
+                broadcastState();
+            };
+
+            // 1. 出題按鈕按下後，無須手動按倒數，直接出題並自動倒數計時 30 秒
             const startQuestionPhase = () => {
+                gameState.showCardNotice = false;
+
                 if (!gameState.selectedCategory) {
                     confirmCategory();
                     if (!gameState.selectedCategory) return;
                 }
 
                 if (!gameState.activeCards[gameState.activeTeam]) {
-                    confirmCardVote();
+                    confirmCardVote(false); // 避免出題時彈出卡片公告圖卡
                 }
                 
                 const targetCat = gameState.selectedCategory;
@@ -1336,11 +1515,14 @@
                 gameState.phase = 'QUESTION';
                 gameState.isScored = false;
                 gameState.lastRevealResult = null;
-                resetTimer();
-                startTimer();
+                gameState.showCardNotice = false;
                 
                 gameState.usedQuestionIds.push(selectedQ.id);
-                systemMessage.value = `【${targetCat}】第 ${gameState.currentQuestionIndex + 1} 題開始！倒數 30 秒。`;
+                gameState.timer = 30;
+                
+                // 核心修改：控台「出題」按下後，直接開啟 30s 倒數！
+                startTimer();
+                systemMessage.value = `【${targetCat}】第 ${currentRoundNumber.value} 題開放！作答倒數 30 秒中...`;
                 broadcastState();
             };
 
@@ -1361,7 +1543,13 @@
                         broadcastState();
                     } else {
                         stopTimer();
-                        systemMessage.value = '30 秒倒數結束！請主持人揭曉正確答案。';
+                        if (gameState.phase === 'CATEGORY_VOTE') {
+                            systemMessage.value = '15 秒類別投票倒數結束！表單已鎖定。';
+                        } else if (gameState.phase === 'CARD_PLAY') {
+                            systemMessage.value = '15 秒戰術卡投票倒數結束！表單已鎖定。';
+                        } else if (gameState.phase === 'QUESTION') {
+                            systemMessage.value = '30 秒作答倒數結束！請主持人揭曉正確答案。';
+                        }
                         broadcastState();
                     }
                 }, 1000);
@@ -1376,11 +1564,15 @@
 
             const resetTimer = () => {
                 stopTimer();
-                gameState.timer = 30;
+                if (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') {
+                    gameState.timer = 15;
+                } else {
+                    gameState.timer = 30;
+                }
                 broadcastState();
             };
 
-            const useCard = (team, card) => {
+            const useCard = (team, card, triggerNotice = true) => {
                 if (team !== gameState.activeTeam) {
                     alert('只有當前進攻方隊伍可以發動戰術卡片！');
                     return;
@@ -1392,6 +1584,9 @@
 
                 card.used = true;
                 gameState.activeCards[team] = card;
+                if (triggerNotice) {
+                    gameState.showCardNotice = true;
+                }
                 systemMessage.value = `${team === 'red' ? '紅隊' : '藍隊'} 發動戰術卡片：【${card.name}】！`;
                 setPhase('CARD_PLAY');
             };
@@ -1400,6 +1595,7 @@
                 if (gameState.activeCards[team]) {
                     gameState.activeCards[team].used = false;
                     gameState.activeCards[team] = null;
+                    gameState.showCardNotice = false;
                     systemMessage.value = `${team === 'red' ? '紅隊' : '藍隊'} 已撤銷戰術卡片，恢復一般攻防。`;
                     broadcastState();
                 }
@@ -1481,6 +1677,7 @@
                 }
 
                 let addedPoints = correctCount * 2;
+                let enemyDeduction = 0;
                 let stealSuccess = false;
                 let stealFail = false;
                 let grandSlamSuccess = false;
@@ -1502,6 +1699,7 @@
                     } else if (attackCard.name.includes('盜壘成功')) {
                         if (correctCount >= 5) {
                             stealSuccess = true;
+                            enemyDeduction = 3;
                             if (isFirstTimeReveal) {
                                 gameState.scores[defendTeam] = Math.max(0, gameState.scores[defendTeam] - 3);
                             }
@@ -1543,7 +1741,8 @@
                     correctCount: correctCount,
                     statusText: statusText,
                     statusType: statusType,
-                    addedPoints: addedPoints
+                    addedPoints: addedPoints,
+                    enemyDeduction: enemyDeduction
                 };
 
                 let msg = `公布正解 [${correctOpt}]！${activeTeam === 'red' ? '紅隊' : '藍隊'} 共 ${correctCount} 桌答對；${statusText}；總計進帳 +${addedPoints} 分。${!isFirstTimeReveal ? ' (本題得分已結算，不重複加分)' : ''}`;
@@ -1561,11 +1760,12 @@
                 gameState.selectedCategory = null;
                 gameState.isTieVote = false;
                 gameState.isScored = false;
+                gameState.showCardNotice = false;
                 gameState.lastRevealResult = null;
                 gameState.answers = {};
                 gameState.activeCards = { red: null, blue: null };
-                gameState.redCards.forEach(c => c.used = false);
-                gameState.blueCards.forEach(c => c.used = false);
+                gameState.redCards = JSON.parse(JSON.stringify(defaultRedCards));
+                gameState.blueCards = JSON.parse(JSON.stringify(defaultBlueCards));
                 Object.keys(gameState.categoryVotes).forEach(key => gameState.categoryVotes[key] = 0);
                 gameState.cardVotes = { none: 0 };
                 gameState.tableCardVotes = {};
@@ -1608,13 +1808,16 @@
                 submittedTablesCount,
                 activeTeamTables,
                 categoryRemaining,
+                currentRoundNumber,
                 getActiveTeamAvailableCards,
                 openNewWindow,
                 lockTable,
+                unlockSpecificTable,
                 setPhase,
                 setActiveTeam,
                 confirmCategory,
                 confirmCardVote,
+                closeCardNotice,
                 startQuestionPhase,
                 toggleTimer,
                 resetTimer,
