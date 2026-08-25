@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MLB 200人線下互動對決系統 - 完整防護版</title>
+    <title>MLB 200人線下互動對決系統 - 棒球競技版</title>
     <!-- Vue 3 CDN -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Tailwind CSS CDN -->
@@ -270,7 +270,7 @@
                         <div class="my-1">
                             <div class="text-4xl sm:text-6xl font-oswald font-black tracking-widest"
                                  :class="gameState.timer <= 5 ? 'text-red-500 animate-pulse' : 'text-slate-100'">
-                                00:{{ gameState.timer < 10 ? '0' + gameState.timer : gameState.timer }}
+                                00:{{ displayTimerFormatted }}
                             </div>
                         </div>
                         <div class="mt-2">
@@ -305,7 +305,7 @@
 
                 <div class="mt-4 bg-slate-950 h-3.5 rounded-full overflow-hidden border border-slate-800 shadow-inner p-0.5">
                     <div class="h-full timer-bar rounded-full" 
-                         :style="{ width: (gameState.timer / (gameState.phase === 'QUESTION' ? 30 : 15) * 100) + '%' }"
+                         :style="{ width: (Math.max(0, gameState.timer) / currentMaxTimer * 100) + '%' }"
                          :class="gameState.timer > 5 ? 'bg-emerald-500' : 'bg-red-500'"></div>
                 </div>
             </div>
@@ -478,7 +478,7 @@
                     <div v-if="gameState.phase === 'REVEAL'" class="space-y-4 mt-4">
                         <div v-if="gameState.lastRevealResult" class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-400/90 p-5 rounded-3xl text-center shadow-2xl space-y-3">
                             <div class="text-sm font-black text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-trophy text-base"></i> 本題攻防戰報結算
+                                <i class="fa-solid fa-trophy text-base"></i> 本題攻防戰報結算 (主持人解說區)
                             </div>
                             <div class="grid grid-cols-3 gap-4 py-2 items-center">
                                 <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 shadow-inner">
@@ -645,12 +645,12 @@
                             </div>
                             <div>
                                 <label class="text-xs text-amber-400 font-bold block mb-1.5 flex items-center justify-between">
-                                    <span><i class="fa-solid fa-stopwatch mr-1"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : '30 秒答題計時器' }}</span>
+                                    <span><i class="fa-solid fa-stopwatch mr-1"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : (currentQuestion.id === 5 ? '40 秒答題計時器' : '30 秒答題計時器') }}</span>
                                 </label>
                                 <div class="flex gap-2">
                                     <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-md">
                                         <i class="fa-solid" :class="gameState.isTimerRunning ? 'fa-pause' : 'fa-play'"></i>
-                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + gameState.timer + 's)' }}
+                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + Math.max(0, gameState.timer) + 's)' }}
                                     </button>
                                     <button @click="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl">
                                         重置
@@ -844,7 +844,6 @@
                 </p>
             </div>
 
-            <!-- 球賽選手應援卡框 -->
             <div class="w-full max-w-sm bg-mlbDark border-4 border-slate-700 rounded-3xl p-5 shadow-2xl flex flex-col justify-between min-h-[590px] relative overflow-hidden jumbotron-border">
                 <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-amber-400 to-blue-500"></div>
 
@@ -877,7 +876,7 @@
                         </p>
                     </div>
 
-                    <!-- 類別投票階段 -->
+                    <!-- 類別投票階段 (具備 Grace Period 防壓秒掉單) -->
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -891,7 +890,7 @@
                             <h3 class="text-xl font-bold text-white">投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成本輪投票，請等待大螢幕揭曉結果！</p>
                         </div>
-                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                        <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-red-500 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-red-400">投票時間已結束</h3>
                             <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
@@ -900,16 +899,16 @@
                             <div class="text-center mb-2 flex justify-between items-center px-1">
                                 <span class="text-xs text-amber-400 font-bold">請票選本局題目類別</span>
                                 <span class="text-xs font-oswald text-amber-400 font-bold">
-                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-xl border border-amber-800/60 mb-3 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待啟動倒數...
+                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
                             </p>
                             <div v-for="cat in categories" :key="cat" class="w-full mb-3">
                                 <button @click="voteCategory(cat)" 
-                                        :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0"
-                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500 sports-btn-3d'"
+                                        :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1"
+                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500 sports-btn-3d'"
                                         class="w-full py-3.5 border-2 text-white rounded-2xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
                                     <span :class="{ 'line-through text-slate-500': categoryRemaining[cat] === 0 }">
                                         <i class="fa-solid fa-tag mr-2" :class="categoryRemaining[cat] === 0 ? 'text-slate-600' : 'text-amber-400'"></i> {{ cat }}
@@ -940,7 +939,7 @@
                             <h3 class="text-xl font-bold text-white">戰術卡投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成戰術卡小組投票，請等待主持人揭曉！</p>
                         </div>
-                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                        <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-purple-400 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-purple-300">戰術卡投票時間已結束</h3>
                             <p class="text-xs text-slate-400">表單已鎖定，請等待主持人結算！</p>
@@ -949,24 +948,24 @@
                             <div class="text-center mb-1 flex justify-between items-center px-1">
                                 <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請小組票選本輪戰術卡</span>
                                 <span class="text-xs font-oswald text-purple-300 font-bold">
-                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-purple-300/90 text-center bg-purple-950/40 p-2 rounded-xl border border-purple-800/60 mb-2 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待啟動倒數...
+                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
                             </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
                                 <button @click="voteCard(card.id)" 
-                                        :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
-                                        :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400 sports-btn-3d'"
+                                        :disabled="!gameState.isTimerRunning || gameState.timer < -1"
+                                        :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400 sports-btn-3d'"
                                         class="w-full p-3.5 bg-slate-900 border-2 text-white rounded-2xl text-left transition shadow-md">
                                     <div class="font-bold text-xs text-amber-300 mb-0.5">{{ card.name }}</div>
                                     <div class="text-[10px] text-slate-300 leading-tight">{{ card.desc }}</div>
                                 </button>
                             </div>
                             <button @click="voteCard('none')" 
-                                    :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
-                                    :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 sports-btn-3d'"
+                                    :disabled="!gameState.isTimerRunning || gameState.timer < -1"
+                                    :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 sports-btn-3d'"
                                     class="w-full py-2.5 bg-slate-900 border-2 border-slate-700 text-slate-400 rounded-2xl text-xs font-bold transition">
                                 不使用戰術卡 (一般攻防)
                             </button>
@@ -999,11 +998,11 @@
 
                             <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5">
                                 <span class="text-slate-300 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請討論後按鍵作答：</span>
-                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ gameState.timer < 10 ? '0'+gameState.timer : gameState.timer }}</span>
+                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ displayTimerFormatted }}</span>
                             </div>
                             
                             <!-- HARD TIMEOUT LOCK UI -->
-                            <div v-if="gameState.timer <= 0" class="py-6 text-center space-y-2">
+                            <div v-if="gameState.timer < -1" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-hourglass-end text-4xl text-red-500 mb-1 animate-bounce"></i>
                                 <h3 class="text-lg font-bold text-red-400">作答時間已結束</h3>
                                 <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
@@ -1014,7 +1013,7 @@
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
                                 <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
                             </div>
-                            <!-- SUCCESS SUBMIT UI -->
+                            <!-- SUCCESS SUBMIT UI (樂觀 UI 鎖定) -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
                                 <div class="text-base font-bold text-emerald-300">答案已成功提交！</div>
@@ -1132,64 +1131,56 @@
                 sessionStorage.removeItem('mlb_admin_auth');
             };
 
-            // 題庫列表 (12 題)
+            // 題庫列表 (10 題)
             const questions = ref([
                 { 
                     id: 1, 
                     category: '歷史紀錄', 
-                    question: '大聯盟MLB單季個人最多全壘打紀錄保持人是誰？', 
-                    options: { A: 'Babe Ruth', B: 'Barry Bonds', C: 'Hank Aaron', D: 'Mark McGwire' }, 
-                    answer: 'B', 
-                    explanation: 'Barry Bonds 於 2001 年賽季單季擊出 73 支全壘打，創下 MLB 歷史單季最高紀錄。' 
+                    question: 'MLB 聯盟全體退休的「42 號」背號，是用來紀念哪位傳奇球星？', 
+                    options: { A: 'Jackie Robinson', B: 'Derek Jeter', C: 'Mariano Rivera', D: 'Ted Williams' }, 
+                    answer: 'A', 
+                    explanation: 'Jackie Robinson 是 MLB 現代首位黑人球員，42 號於 1997 年獲全聯盟永久退休。' 
                 },
                 { 
                     id: 2, 
                     category: '歷史紀錄', 
-                    question: 'MLB 聯盟全體退休的「42 號」背號，是用來紀念哪位傳奇球星？', 
-                    options: { A: 'Jackie Robinson', B: 'Derek Jeter', C: 'Mariano Rivera', D: 'Ted Williams' }, 
-                    answer: 'A', 
-                    explanation: 'Jackie Robinson 是 MLB 現代首位黑人球員，42號於 1997 年獲全聯盟永久退休。' 
-                },
-                { 
-                    id: 3, 
-                    category: '歷史紀錄', 
-                    question: '大聯盟歷史上唯一一位獲得「100% 全票通過」入選棒球名人堂（Hall of Fame）的球員是？', 
+                    question: '大聯盟歷史上唯一一位獲得「100% 全票通過」入選棒球名人堂的球員是？', 
                     options: { A: 'Ken Griffey Jr.', B: 'Mariano Rivera', C: 'Greg Maddux', D: 'Derek Jeter' }, 
                     answer: 'B', 
                     explanation: '洋基隊傳奇救援王 Mariano Rivera 於 2019 年獲 425 票全票無異議入選名人堂。' 
                 },
                 { 
+                    id: 3, 
+                    category: '現役球星', 
+                    question: `【猜猜我是誰】
+2024 年創造 MLB 史無前例的「50-50」單季紀錄。
+生涯前三座 MVP 皆全票當選。
+2024 年是加盟國聯的第一個球季。`, 
+                    options: { A: 'Ronald Acuña Jr.', B: 'Shohei Ohtani', C: 'Aaron Judge', D: 'Elly De La Cruz' }, 
+                    answer: 'B', 
+                    explanation: '大谷翔平在 2024 年效力道奇隊（國聯）創下 54 轟 59 盜，並全票獲選生涯第三座 MVP。' 
+                },
+                { 
                     id: 4, 
                     category: '現役球星', 
                     question: `【猜猜我是誰】
-1. 2024年創造MLB史無前例的「50-50」單季紀錄。
-2. 生涯前三座MVP皆全票當選。
-3. 2024年是加盟國聯的第一個球季。`, 
-                    options: { A: 'Ronald Acuña Jr.', B: 'Shohei Ohtani', C: 'Aaron Judge', D: 'Elly De La Cruz' }, 
-                    answer: 'B', 
-                    explanation: '大谷翔平在2024年效力道奇隊(國聯)創下54轟59盜，並全票獲選生涯第三座MVP。' 
-                },
-                { 
-                    id: 5, 
-                    category: '現役球星', 
-                    question: `【猜猜我是誰】
-1. 2023年選秀狀元。
-2. 新人球季11勝3敗、防禦率1.96、170K。
+1. 2023 年選秀狀元。
+2. 新人球季 11 勝 3 敗、防禦率 1.96、170K。
 3. 拿下新人王並擔任國聯明星賽先發。`, 
                     options: { A: 'Tarik Skubal', B: 'Yoshinobu Yamamoto', C: 'Paul Skenes', D: 'Garrett Crochet' }, 
                     answer: 'C', 
                     explanation: '正解為匹茲堡海盜隊的天才大物投手 Paul Skenes。' 
                 },
                 { 
-                    id: 6, 
+                    id: 5, 
                     category: '現役球星', 
-                    question: '以下哪組「球員－2025成就」配對錯誤？', 
-                    options: { A: '大谷翔平－國聯MVP', B: 'Aaron Judge－美聯MVP', C: 'Paul Skenes－國聯賽揚獎', D: 'Cal Raleigh－美聯MVP' }, 
+                    question: '關於洛杉磯天使隊巨星 Mike Trout，以下哪一個敘述是錯誤的？', 
+                    options: { A: '生涯曾 3 度獲選美聯 MVP', B: '雖然屢次出現守備美技，但生涯至今「從未」獲得過金手套獎', C: '是個狂熱的「氣象迷」，休賽季曾親自連線氣象頻道連線報導暴風雪', D: '2009 年選秀大會上，天賦異稟的他以「選秀狀元」加盟天使隊' }, 
                     answer: 'D', 
-                    explanation: 'Raleigh雖然在2025年敲出驚人的60轟，但美聯MVP最後由Aaron Judge獲得，Raleigh排名第二。' 
+                    explanation: '當年許多球隊高層嚴重低估了他的天賦，天使隊是在 2009 年選秀首輪第 25 順位才撿到這位未來巨星！' 
                 },
                 { 
-                    id: 7, 
+                    id: 6, 
                     category: '戰術規則', 
                     question: 'MLB 於 2023 年全新實施何種規則以大幅縮短比賽時間？', 
                     options: { A: '投球計時器 (Pitch Timer)', B: '限制投手牽制次數', C: '加大壘包尺寸', D: '以上皆是' }, 
@@ -1197,45 +1188,37 @@
                     explanation: '2023 年 MLB 同時引進了投球計時器、加大壘包以及牽制次數限制，比賽平均縮短約 30 分鐘。' 
                 },
                 { 
-                    id: 8, 
-                    category: '戰術規則', 
-                    question: '棒球術語中，「完全打擊 (Hit for the Cycle)」不包含以下哪種安打？', 
-                    options: { A: '一壘安打', B: '二壘安打', C: '三壘安打', D: '滿貫全壘打' }, 
-                    answer: 'D', 
-                    explanation: '完全打擊只需同一人在單場包含：一壘安打、二壘安打、三壘安打與任意全壘打即可。' 
-                },
-                { 
-                    id: 9, 
+                    id: 7, 
                     category: '戰術規則', 
                     question: '新任投手已經走上丘完成局間熱身，總教練突然改變心意，能不能在他面對打者前再換一名投手？', 
                     options: { A: '可以，球還沒正式投出', B: '不可，原則上必須至少面對1名打者', C: '可以，但會扣一次丘上會議', D: '可以，但只能換左投' }, 
                     answer: 'B', 
-                    explanation: '自2024年規則調整後，上場進行局間熱身的投手必須至少面對1名打者，避免用熱身後臨時換投來拖延比賽。' 
+                    explanation: '自 2024 年規則調整後，上場進行局間熱身的投手必須至少面對 1 名打者，避免用熱身後臨時換投來拖延比賽。' 
                 },
                 { 
-                    id: 10, 
+                    id: 8, 
                     category: '綜合題', 
                     question: `【是非題】以下情況是否為真實發生事件？
-2025年季後賽，一名水手球迷穿著「DUMP HERE 61」的衣服求Cal Raleigh把球轟過來。結果成真後，他當場換上「DUMP HERE 62」的另一件衣服！`, 
+2025 年季後賽，一名水手球迷穿著「DUMP HERE 61」的衣服求 Cal Raleigh 把球轟過來。結果成真後，他當場換上「DUMP HERE 62」的另一件衣服！`, 
                     options: { O: '正確 (True)', X: '錯誤 (False)' }, 
                     answer: 'O', 
-                    explanation: '事件為真！發生在2025年ALDS水手對老虎，球迷真的準備了下一件衣服，Raleigh看到也笑了，後來還送給他簽名球棒。' 
+                    explanation: '事件為真！發生在 2025 年 ALDS 水手對老虎，球迷真的準備了下一件衣服，Raleigh 看到也笑了，後來還送給他簽名球棒' 
                 },
                 { 
-                    id: 11, 
+                    id: 9, 
                     category: '綜合題', 
                     question: '近年道奇球員開轟回到休息區時，常看到隊友朝全壘打打者臉上灑什麼？', 
                     options: { A: '爆米花', B: '葵花籽', C: '水', D: '彩帶' }, 
                     answer: 'B', 
-                    explanation: '這項慶祝在2024年由 Teoscar Hernández 帶進道奇休息區；之後包括大谷翔平等球員開轟回來，都會接受葵花籽洗臉。' 
+                    explanation: '這項慶祝在 2024 年由 Teoscar Hernández 帶進道奇休息區；之後包括大谷翔平等球員開轟回來，都會接受葵花籽洗臉。' 
                 },
                 { 
-                    id: 12, 
+                    id: 10, 
                     category: '綜合題', 
-                    question: '【是非題】現在到 T-Mobile Park，在球場外「無法」看到鈴木一朗的雕像？', 
+                    question: '【是非題】現在到 T-Mobile Park，在球場外「無法」看到鈴木一朗的雕像', 
                     options: { O: '是 (無法看到)', X: '否 (可以看到)' }, 
                     answer: 'X', 
-                    explanation: '水手已在2026年4月10日正式揭幕Ichiro雕像；他的51號也已於2025年由水手隊正式退休。' 
+                    explanation: '水手已在 2026 年 4 月 10 日正式揭幕 Ichiro 雕像；他的 51 號也已於 2025 年由水手隊正式退休。' 
                 }
             ]);
 
@@ -1270,6 +1253,20 @@
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
             const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
 
+            // 格式化顯示時間（自動防護負數顯示，如 -1s 仍呈現 00:00）
+            const displayTimerFormatted = computed(() => {
+                const validT = Math.max(0, gameState.timer);
+                return validT < 10 ? '0' + validT : validT;
+            });
+
+            // 計算當前階段最大倒數秒數
+            const currentMaxTimer = computed(() => {
+                if (gameState.phase === 'QUESTION') {
+                    return (currentQuestion.value && currentQuestion.value.id === 5) ? 40 : 30;
+                }
+                return 15;
+            });
+
             // 計算實際局數
             const currentRoundNumber = computed(() => {
                 if (gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL') {
@@ -1283,7 +1280,7 @@
             });
 
             const categoryRemaining = computed(() => {
-                const counts = { '歷史紀錄': 3, '現役球星': 3, '戰術規則': 3, '綜合題': 3 };
+                const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合題': 3 };
                 if (!gameState.usedQuestionIds) return counts;
                 gameState.usedQuestionIds.forEach(id => {
                     const q = questions.value.find(q => q.id === id);
@@ -1367,7 +1364,6 @@
                 const newConnected = [...gameState.connectedTables, tableNum];
                 localStorage.setItem('my_locked_table', tableNum); 
                 
-                // 精密更新，避免干擾倒數計時
                 const updates = {};
                 updates['mlb_live_game_state/connectedTables'] = newConnected;
                 updates['mlb_live_game_state/systemMessage'] = `${tableFormatted} 桌已成功鎖定代表身份！`;
@@ -1412,7 +1408,7 @@
                     systemMessage.value = `階段切換：戰術卡投票。請主持人點擊「Start 啟動倒數」開放投票。`;
                 } else if (phase === 'QUESTION') {
                     gameState.showCardNotice = false;
-                    gameState.timer = 30;
+                    gameState.timer = (currentQuestion.value && currentQuestion.value.id === 5) ? 40 : 30;
                     gameState.isTimerRunning = false;
                     systemMessage.value = `階段切換：題目回答。`;
                 } else {
@@ -1534,6 +1530,7 @@
                 broadcastState();
             };
 
+            // 出題與倒數 (第 5 題 40 秒，其餘 30 秒)
             const startQuestionPhase = () => {
                 gameState.showCardNotice = false;
 
@@ -1565,10 +1562,12 @@
                 gameState.showCardNotice = false;
                 
                 gameState.usedQuestionIds.push(selectedQ.id);
-                gameState.timer = 30;
+
+                const questionTimer = selectedQ.id === 5 ? 40 : 30;
+                gameState.timer = questionTimer;
                 
                 startTimer();
-                systemMessage.value = `【${targetCat}】第 ${currentRoundNumber.value} 題開放！作答倒數 30 秒中...`;
+                systemMessage.value = `【${targetCat}】第 ${currentRoundNumber.value} 題開放！作答倒數 ${questionTimer} 秒中...`;
                 broadcastState();
             };
 
@@ -1580,11 +1579,12 @@
                 }
             };
 
+            // 壓秒防護的核心倒數計時器 (允許多延遲 1 秒做 Grace Period)
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
                 timerInterval = setInterval(() => {
-                    if (gameState.timer > 0) {
+                    if (gameState.timer > -1) {
                         gameState.timer--;
                         broadcastState();
                     } else {
@@ -1594,7 +1594,7 @@
                         } else if (gameState.phase === 'CARD_PLAY') {
                             systemMessage.value = '15 秒戰術卡投票倒數結束！表單已鎖定。';
                         } else if (gameState.phase === 'QUESTION') {
-                            systemMessage.value = '30 秒作答倒數結束！請主持人揭曉正確答案。';
+                            systemMessage.value = `${currentMaxTimer.value} 秒作答倒數結束！請主持人揭曉正確答案。`;
                         }
                         broadcastState();
                     }
@@ -1612,6 +1612,8 @@
                 stopTimer();
                 if (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') {
                     gameState.timer = 15;
+                } else if (gameState.phase === 'QUESTION') {
+                    gameState.timer = (currentQuestion.value && currentQuestion.value.id === 5) ? 40 : 30;
                 } else {
                     gameState.timer = 30;
                 }
@@ -1627,7 +1629,6 @@
                 const cardsArray = team === 'red' ? gameState.redCards : gameState.blueCards;
                 const targetCard = cardsArray.find(c => c.id === card.id);
 
-                // 若原本該隊已有發動中的卡片且與欲切換的卡不同，先將原卡片恢復為未消耗狀態
                 if (gameState.activeCards[team] && gameState.activeCards[team].id !== card.id) {
                     const prevCard = cardsArray.find(c => c.id === gameState.activeCards[team].id);
                     if (prevCard) prevCard.used = false;
@@ -1645,14 +1646,13 @@
                 setPhase('CARD_PLAY');
             };
 
-            // 核心修正：精確還原撤銷卡片狀態
             const cancelCard = (team) => {
                 const activeCard = gameState.activeCards[team];
                 if (activeCard) {
                     const cardsArray = team === 'red' ? gameState.redCards : gameState.blueCards;
                     const targetCard = cardsArray.find(c => c.id === activeCard.id);
                     if (targetCard) {
-                        targetCard.used = false; // 精確還原為未發動、未消耗
+                        targetCard.used = false;
                     }
                     gameState.activeCards[team] = null;
                     gameState.showCardNotice = false;
@@ -1661,8 +1661,12 @@
                 }
             };
 
+            // 樂觀 UI 鎖定 (Optimistic Lock) + 雲端單點更新，阻絕 Latency 壓秒問題
             const submitMobileAnswer = (key) => {
                 const tableKey = 'table_' + selectedMobileTable.value;
+                // 本地 UI 0 毫秒即時鎖定
+                gameState.answers[tableKey] = key;
+
                 const updates = {};
                 updates['mlb_live_game_state/answers/' + tableKey] = key;
                 updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌代表成功提交答案 [${key}]！`;
@@ -1674,8 +1678,12 @@
                 if (gameState.tableVotes[tableKey]) return; 
 
                 if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
+                    // 本地 UI 0 毫秒即時鎖定
+                    gameState.tableVotes[tableKey] = true;
+                    gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
+
                     const updates = {};
-                    updates['mlb_live_game_state/categoryVotes/' + cat] = (gameState.categoryVotes[cat] || 0) + 1;
+                    updates['mlb_live_game_state/categoryVotes/' + cat] = gameState.categoryVotes[cat];
                     updates['mlb_live_game_state/tableVotes/' + tableKey] = true;
                     updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
                     db.ref().update(updates);
@@ -1690,8 +1698,12 @@
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
                 if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
+                    // 本地 UI 0 毫秒即時鎖定
+                    gameState.tableCardVotes[tableKey] = cardId;
+                    gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+
                     const updates = {};
-                    updates['mlb_live_game_state/cardVotes/' + cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+                    updates['mlb_live_game_state/cardVotes/' + cardId] = gameState.cardVotes[cardId];
                     updates['mlb_live_game_state/tableCardVotes/' + tableKey] = cardId;
                     updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
                     db.ref().update(updates);
@@ -1869,6 +1881,8 @@
                 activeTeamTables,
                 categoryRemaining,
                 currentRoundNumber,
+                currentMaxTimer,
+                displayTimerFormatted,
                 getActiveTeamAvailableCards,
                 openNewWindow,
                 lockTable,
