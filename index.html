@@ -54,6 +54,7 @@
         ::-webkit-scrollbar-thumb { background: #1e3a60; border-radius: 3px; }
         .timer-bar { transition: width 1s linear, background-color 0.5s ease; }
 
+        /* 棒球主題視覺增強效果 */
         .baseball-stitch-top {
             border-top: 3px dashed #bd3039;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
@@ -76,11 +77,23 @@
             transform: translateY(3px);
             box-shadow: 0 2px 0 #0f172a, 0 5px 10px rgba(0,0,0,0.4);
         }
+
+        /* 全畫面球場背景（已移除深色遮罩，呈現圖片原本色彩） */
+        .stadium-bg-screen {
+            background-image: url('bg-stadium.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-<div id="app" class="flex-1 flex flex-col relative">
+<div id="app" class="flex-1 flex flex-col relative min-h-screen">
+
+    <!-- 舞台大螢幕全螢幕滿版球場背景 (Full Viewport Stadium Background) -->
+    <div v-if="currentRoute === 'screen'" class="fixed inset-0 stadium-bg-screen z-0 pointer-events-none"></div>
 
     <!-- 戰術卡宣佈彈出圖卡 (Stage Screen & Mobile Pop-up Modal) -->
     <div v-if="gameState.showCardNotice" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -118,7 +131,7 @@
                 <i class="fa-solid fa-check-double"></i> 控台關閉通知
             </button>
             <div v-else class="text-xs text-amber-400/90 font-bold animate-pulse pt-2">
-                <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 請等候主持人控台推進下一階段...
+                <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 請等候下一階段...
             </div>
         </div>
     </div>
@@ -163,7 +176,7 @@
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col p-3 sm:p-6 max-w-7xl w-full mx-auto">
+    <main class="flex-1 flex flex-col p-3 sm:p-6 max-w-7xl w-full mx-auto relative z-10">
 
         <!-- PAGE 0: 系統門戶 (SYSTEM HUB) -->
         <section v-if="currentRoute === '' || currentRoute === 'hub'" class="flex-1 flex flex-col justify-center items-center py-8">
@@ -232,7 +245,7 @@
         <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen) -->
         <section v-else-if="currentRoute === 'screen'" class="flex-1 flex flex-col justify-between space-y-6">
             
-            <div class="bg-gradient-to-r from-mlbDark via-slate-900 to-mlbDark border-2 border-slate-700 rounded-3xl p-4 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border">
+            <div class="bg-gradient-to-r from-mlbDark/90 via-slate-900/90 to-mlbDark/90 border-2 border-slate-700 rounded-3xl p-4 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border backdrop-blur-sm">
                 <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-blue-600"></div>
                 
                 <div class="grid grid-cols-12 gap-4 items-center">
@@ -311,7 +324,7 @@
             </div>
 
             <!-- 主舞台賽事播報面板 -->
-            <div class="bg-mlbCardBg border-2 border-slate-700/80 rounded-3xl p-6 sm:p-8 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[380px] relative overflow-hidden jumbotron-border">
+            <div class="bg-mlbCardBg/95 border-2 border-slate-700/80 rounded-3xl p-6 sm:p-8 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[380px] relative overflow-hidden jumbotron-border backdrop-blur-md">
                 
                 <!-- PHASE: LOBBY -->
                 <div v-if="gameState.phase === 'LOBBY'" class="w-full text-center space-y-6">
@@ -337,7 +350,7 @@
                     <p class="text-sm text-slate-400 pt-2">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
                 </div>
 
-                <!-- PHASE: CATEGORY_VOTE -->
+                <!-- PHASE: CATEGORY_VOTE (已修復為直接對齊 categories 陣列) -->
                 <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-3xl text-center space-y-6">
                     <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full inline-block font-bold text-sm">
                         <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
@@ -345,7 +358,7 @@
                     <h2 class="text-3xl font-black text-white tracking-wide">本輪題目類別票選中</h2>
 
                     <div class="grid grid-cols-2 gap-4 pt-4">
-                        <div v-for="(count, cat) in gameState.categoryVotes" :key="cat" 
+                        <div v-for="cat in categories" :key="cat" 
                              class="bg-slate-900/90 border-2 border-slate-700 p-5 rounded-2xl text-left flex justify-between items-center relative overflow-hidden shadow-lg">
                             <div v-if="categoryRemaining[cat] === 0" class="absolute inset-0 bg-black/80 flex items-center justify-center z-10 backdrop-blur-sm">
                                 <span class="text-red-400 font-black tracking-widest border-2 border-red-500/60 bg-red-950/90 px-4 py-1 rounded-full transform -rotate-12 shadow-xl">題庫已耗盡</span>
@@ -361,7 +374,7 @@
                                 <span class="text-xl font-bold text-white">{{ cat }}</span>
                             </div>
                             <div class="text-right" :class="{ 'opacity-40': categoryRemaining[cat] === 0 }">
-                                <span class="text-4xl font-oswald font-black text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">{{ count }}</span>
+                                <span class="text-4xl font-oswald font-black text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">{{ gameState.categoryVotes[cat] || 0 }}</span>
                                 <span class="text-xs text-slate-400 block">票</span>
                             </div>
                         </div>
@@ -478,7 +491,7 @@
                     <div v-if="gameState.phase === 'REVEAL'" class="space-y-4 mt-4">
                         <div v-if="gameState.lastRevealResult" class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-400/90 p-5 rounded-3xl text-center shadow-2xl space-y-3">
                             <div class="text-sm font-black text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-trophy text-base"></i> 本題攻防戰報結算 (主持人解說區)
+                                <i class="fa-solid fa-trophy text-base"></i> 本題攻防戰報結算
                             </div>
                             <div class="grid grid-cols-3 gap-4 py-2 items-center">
                                 <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 shadow-inner">
@@ -537,13 +550,13 @@
             </div>
 
             <!-- Bottom Ticker Bar -->
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between text-xs text-slate-400 shadow-xl">
+            <div class="bg-slate-950/90 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between text-xs text-slate-400 shadow-xl backdrop-blur-sm">
                 <div class="flex items-center gap-2.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
                     <span class="font-bold text-slate-200">賽況播報：</span>
                     <span class="text-slate-300 font-medium">{{ systemMessage }}</span>
                 </div>
-                <div class="font-oswald text-slate-500 hidden sm:block tracking-wider">MLB JUMBOTRON DISPLAY VIEW</div>
+                <div class="font-oswald text-slate-500 hidden sm:block tracking-wider">JUMBOTRON DISPLAY VIEW</div>
             </div>
 
         </section>
@@ -876,7 +889,7 @@
                         </p>
                     </div>
 
-                    <!-- 類別投票階段 (具備 Grace Period 防壓秒掉單) -->
+                    <!-- 類別投票階段 -->
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -903,7 +916,7 @@
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-xl border border-amber-800/60 mb-3 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
+                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
                             </p>
                             <div v-for="cat in categories" :key="cat" class="w-full mb-3">
                                 <button @click="voteCategory(cat)" 
@@ -942,7 +955,7 @@
                         <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-purple-400 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-purple-300">戰術卡投票時間已結束</h3>
-                            <p class="text-xs text-slate-400">表單已鎖定，請等待主持人結算！</p>
+                            <p class="text-xs text-slate-400">表單已鎖定，請等待結算！</p>
                         </div>
                         <div v-else class="space-y-2">
                             <div class="text-center mb-1 flex justify-between items-center px-1">
@@ -952,7 +965,7 @@
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-purple-300/90 text-center bg-purple-950/40 p-2 rounded-xl border border-purple-800/60 mb-2 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待主持人控台啟動倒數...
+                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
                             </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
                                 <button @click="voteCard(card.id)" 
@@ -1013,7 +1026,7 @@
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
                                 <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
                             </div>
-                            <!-- SUCCESS SUBMIT UI (樂觀 UI 鎖定) -->
+                            <!-- SUCCESS SUBMIT UI -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
                                 <div class="text-base font-bold text-emerald-300">答案已成功提交！</div>
@@ -1197,16 +1210,15 @@
                 },
                 { 
                     id: 8, 
-                    category: '綜合題', 
-                    question: `【是非題】以下情況是否為真實發生事件？
-2025 年季後賽，一名水手球迷穿著「DUMP HERE 61」的衣服求 Cal Raleigh 把球轟過來。結果成真後，他當場換上「DUMP HERE 62」的另一件衣服！`, 
-                    options: { O: '正確 (True)', X: '錯誤 (False)' }, 
-                    answer: 'O', 
-                    explanation: '事件為真！發生在 2025 年 ALDS 水手對老虎，球迷真的準備了下一件衣服，Raleigh 看到也笑了，後來還送給他簽名球棒' 
+                    category: '綜合時事', 
+                    question: '台灣好手李灝宇近期效力於底特律老虎隊。球隊官方社群在今年的「球員週」期間，以綽號公布了每日先發名單。\n請問球隊為球風強悍且拚勁十足的李灝宇冠上了什麼霸氣外號？', 
+                    options: { A: '怪力男', B: '比特犬', C: '戰神', D: 'Gangster' }, 
+                    answer: 'B', 
+                    explanation: '李灝宇在老虎官方的球員週先發名單中，以中文「比特犬」亮相，和隊友清一色的英文綽號相比相當醒目。' 
                 },
                 { 
                     id: 9, 
-                    category: '綜合題', 
+                    category: '綜合時事', 
                     question: '近年道奇球員開轟回到休息區時，常看到隊友朝全壘打打者臉上灑什麼？', 
                     options: { A: '爆米花', B: '葵花籽', C: '水', D: '彩帶' }, 
                     answer: 'B', 
@@ -1214,7 +1226,7 @@
                 },
                 { 
                     id: 10, 
-                    category: '綜合題', 
+                    category: '綜合時事', 
                     question: '【是非題】現在到 T-Mobile Park，在球場外「無法」看到鈴木一朗的雕像', 
                     options: { O: '是 (無法看到)', X: '否 (可以看到)' }, 
                     answer: 'X', 
@@ -1222,7 +1234,7 @@
                 }
             ]);
 
-            const categories = ['歷史紀錄', '現役球星', '戰術規則', '綜合題'];
+            const categories = ['歷史紀錄', '現役球星', '戰術規則', '綜合時事'];
 
             const gameState = reactive({
                 phase: 'LOBBY',
@@ -1239,7 +1251,7 @@
                 timer: 30,
                 isTimerRunning: false, 
                 activeCards: { red: null, blue: null },
-                categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合題': 0 },
+                categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 },
                 cardVotes: { none: 0 }, 
                 tableCardVotes: {},      
                 tableVotes: {}, 
@@ -1253,7 +1265,7 @@
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
             const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
 
-            // 格式化顯示時間（自動防護負數顯示，如 -1s 仍呈現 00:00）
+            // 格式化顯示時間
             const displayTimerFormatted = computed(() => {
                 const validT = Math.max(0, gameState.timer);
                 return validT < 10 ? '0' + validT : validT;
@@ -1280,7 +1292,7 @@
             });
 
             const categoryRemaining = computed(() => {
-                const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合題': 3 };
+                const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合時事': 3 };
                 if (!gameState.usedQuestionIds) return counts;
                 gameState.usedQuestionIds.forEach(id => {
                     const q = questions.value.find(q => q.id === id);
@@ -1306,11 +1318,16 @@
                         if (!data.tableVotes) data.tableVotes = {};
                         if (!data.tableCardVotes) data.tableCardVotes = {};
                         if (!data.cardVotes) data.cardVotes = { none: 0 };
-                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合題': 0 };
+                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
                         if (!data.activeCards) data.activeCards = { red: null, blue: null };
                         if (data.isScored === undefined) data.isScored = false;
                         if (data.showCardNotice === undefined) data.showCardNotice = false;
                         if (!data.lastRevealResult) data.lastRevealResult = null;
+
+                        // 清除舊分類名稱 '綜合題'（避免干擾雲端讀取）
+                        if (data.categoryVotes) {
+                            delete data.categoryVotes['綜合題'];
+                        }
 
                         // 自動同步校正道具卡最新名稱與說明
                         if (data.redCards) {
@@ -1389,7 +1406,7 @@
                 stopTimer();
                 
                 if (phase === 'CATEGORY_VOTE') {
-                    Object.keys(gameState.categoryVotes).forEach(key => gameState.categoryVotes[key] = 0);
+                    gameState.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
                     gameState.tableVotes = {};
                     gameState.cardVotes = { none: 0 };
                     gameState.tableCardVotes = {};
@@ -1530,7 +1547,7 @@
                 broadcastState();
             };
 
-            // 出題與倒數 (第 5 題 40 秒，其餘 30 秒)
+            // 出題與倒數
             const startQuestionPhase = () => {
                 gameState.showCardNotice = false;
 
@@ -1579,7 +1596,7 @@
                 }
             };
 
-            // 壓秒防護的核心倒數計時器 (允許多延遲 1 秒做 Grace Period)
+            // 壓秒防護的核心倒數計時器
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
@@ -1661,10 +1678,9 @@
                 }
             };
 
-            // 樂觀 UI 鎖定 (Optimistic Lock) + 雲端單點更新，阻絕 Latency 壓秒問題
+            // 樂觀 UI 鎖定 + 雲端單點更新
             const submitMobileAnswer = (key) => {
                 const tableKey = 'table_' + selectedMobileTable.value;
-                // 本地 UI 0 毫秒即時鎖定
                 gameState.answers[tableKey] = key;
 
                 const updates = {};
@@ -1678,7 +1694,6 @@
                 if (gameState.tableVotes[tableKey]) return; 
 
                 if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
-                    // 本地 UI 0 毫秒即時鎖定
                     gameState.tableVotes[tableKey] = true;
                     gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
 
@@ -1698,7 +1713,6 @@
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
                 if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
-                    // 本地 UI 0 毫秒即時鎖定
                     gameState.tableCardVotes[tableKey] = cardId;
                     gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
 
@@ -1838,7 +1852,7 @@
                 gameState.activeCards = { red: null, blue: null };
                 gameState.redCards = JSON.parse(JSON.stringify(defaultRedCards));
                 gameState.blueCards = JSON.parse(JSON.stringify(defaultBlueCards));
-                Object.keys(gameState.categoryVotes).forEach(key => gameState.categoryVotes[key] = 0);
+                gameState.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
                 gameState.cardVotes = { none: 0 };
                 gameState.tableCardVotes = {};
                 gameState.tableVotes = {};
