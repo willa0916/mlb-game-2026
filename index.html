@@ -1396,6 +1396,18 @@
                             });
                         }
 
+                        // 手機端防護：確保本地已送出的答案與投票不會被未包含該資料的舊快照還原擦除
+                        const tableKey = 'table_' + selectedMobileTable.value;
+                        if (gameState.answers[tableKey] && !data.answers[tableKey]) {
+                            data.answers[tableKey] = gameState.answers[tableKey];
+                        }
+                        if (gameState.tableVotes[tableKey] && !data.tableVotes[tableKey]) {
+                            data.tableVotes[tableKey] = true;
+                        }
+                        if (gameState.tableCardVotes[tableKey] && !data.tableCardVotes[tableKey]) {
+                            data.tableCardVotes[tableKey] = gameState.tableCardVotes[tableKey];
+                        }
+
                         Object.assign(gameState, data);
 
                         if (isTableLocked.value && !gameState.connectedTables.includes(selectedMobileTable.value)) {
@@ -1655,14 +1667,15 @@
                 }
             };
 
-            // 倒數計時器
+            // 倒數計時器（修正：計時 Tick 僅更新 Firebase 單項 timer 欄位，防止覆蓋玩家答案）
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
                 timerInterval = setInterval(() => {
                     if (gameState.timer > -1) {
                         gameState.timer--;
-                        broadcastState();
+                        // 僅更新 timer 欄位，不覆蓋全域狀態
+                        db.ref('mlb_live_game_state/timer').set(gameState.timer);
                     } else {
                         stopTimer();
                         if (gameState.phase === 'CATEGORY_VOTE') {
