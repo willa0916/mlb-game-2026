@@ -70,15 +70,15 @@
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.05);
         }
         .sports-btn-3d {
-            box-shadow: 0 5px 0 #0f172a, 0 10px 20px rgba(0,0,0,0.4);
-            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #0f172a, 0 8px 15px rgba(0,0,0,0.4);
+            transition: all 0.15s ease;
         }
         .sports-btn-3d:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #0f172a, 0 5px 10px rgba(0,0,0,0.4);
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #0f172a, 0 3px 6px rgba(0,0,0,0.4);
         }
 
-        /* 全畫面球場背景（已移除深色遮罩，呈現圖片原本色彩） */
+        /* 全畫面球場背景（無遮罩） */
         .stadium-bg-screen {
             background-image: url('bg-stadium.jpg');
             background-size: cover;
@@ -92,7 +92,7 @@
 
 <div id="app" class="flex-1 flex flex-col relative min-h-screen">
 
-    <!-- 舞台大螢幕全螢幕滿版球場背景 (Full Viewport Stadium Background) -->
+    <!-- 舞台大螢幕全螢幕滿版球場背景 -->
     <div v-if="currentRoute === 'screen'" class="fixed inset-0 stadium-bg-screen z-0 pointer-events-none"></div>
 
     <!-- 戰術卡宣佈彈出圖卡 (Stage Screen & Mobile Pop-up Modal) -->
@@ -350,7 +350,7 @@
                     <p class="text-sm text-slate-400 pt-2">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
                 </div>
 
-                <!-- PHASE: CATEGORY_VOTE (已修復為直接對齊 categories 陣列) -->
+                <!-- PHASE: CATEGORY_VOTE (已修復：直接對齊 categories 陣列顯示 綜合時事) -->
                 <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-3xl text-center space-y-6">
                     <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full inline-block font-bold text-sm">
                         <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
@@ -440,7 +440,7 @@
                     </div>
                 </div>
 
-                <!-- PHASE: QUESTION & REVEAL -->
+                <!-- PHASE: QUESTION & REVEAL (優化正解高對比色塊) -->
                 <div v-else-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="w-full max-w-4xl space-y-6">
                     <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
                         <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold px-3.5 py-1 rounded-full flex items-center gap-1.5">
@@ -458,12 +458,14 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                         <div v-for="(optionText, key) in currentQuestion.options" :key="key"
                              :class="[
-                                gameState.phase === 'REVEAL' && key === currentQuestion.answer 
-                                    ? 'bg-emerald-900/80 border-emerald-400 text-white font-bold ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)]' 
-                                    : 'bg-slate-900/90 border-slate-700/80 text-slate-200'
+                                gameState.phase === 'REVEAL'
+                                    ? (key === currentQuestion.answer 
+                                        ? 'bg-emerald-600 border-emerald-400 text-white font-black ring-4 ring-emerald-400/60 shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-[1.02]' 
+                                        : 'bg-slate-950/85 border-slate-800 text-slate-500 opacity-35')
+                                    : 'bg-slate-900/90 border-slate-700/80 text-slate-100'
                              ]"
-                             class="p-4 rounded-2xl border-2 flex items-center gap-3.5 transition">
-                            <span :class="gameState.phase === 'REVEAL' && key === currentQuestion.answer ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-amber-400 border border-amber-500/40'"
+                             class="p-4 rounded-2xl border-2 flex items-center gap-3.5 transition-all duration-300">
+                            <span :class="gameState.phase === 'REVEAL' && key === currentQuestion.answer ? 'bg-emerald-300 text-slate-950 font-black' : 'bg-slate-800 text-amber-400 border border-amber-500/40'"
                                   class="w-10 h-10 rounded-xl flex items-center justify-center font-oswald font-black text-xl flex-shrink-0 shadow">
                                 {{ key }}
                             </span>
@@ -827,7 +829,7 @@
         </section>
 
 
-        <!-- PAGE 3: 📱 手機玩家端獨立頁面 (#mobile) -->
+        <!-- PAGE 3: 📱 手機玩家端獨立頁面 (#mobile - 兩階段點選與確認機制) -->
         <section v-else-if="currentRoute === 'mobile'" class="flex-1 flex flex-col items-center justify-center py-4">
             
             <div class="mb-4 w-full max-w-sm bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex flex-col gap-2.5 shadow-xl backdrop-blur-md">
@@ -910,7 +912,7 @@
                         </div>
                         <div v-else>
                             <div class="text-center mb-2 flex justify-between items-center px-1">
-                                <span class="text-xs text-amber-400 font-bold">請票選本局題目類別</span>
+                                <span class="text-xs text-amber-400 font-bold">請點選意向，再按確認送出</span>
                                 <span class="text-xs font-oswald text-amber-400 font-bold">
                                     <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
@@ -918,11 +920,14 @@
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-xl border border-amber-800/60 mb-3 animate-pulse">
                                 <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
                             </p>
-                            <div v-for="cat in categories" :key="cat" class="w-full mb-3">
-                                <button @click="voteCategory(cat)" 
+                            <div v-for="cat in categories" :key="cat" class="w-full mb-2.5">
+                                <button @click="mobileSelectedCategory = cat" 
                                         :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1"
-                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500 sports-btn-3d'"
-                                        class="w-full py-3.5 border-2 text-white rounded-2xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
+                                        :class="[
+                                            categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'sports-btn-3d',
+                                            mobileSelectedCategory === cat ? 'bg-amber-600/40 border-amber-400 ring-2 ring-amber-400 text-white font-extrabold' : 'bg-slate-900 border-slate-700 text-white'
+                                        ]"
+                                        class="w-full py-3 border-2 rounded-2xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
                                     <span :class="{ 'line-through text-slate-500': categoryRemaining[cat] === 0 }">
                                         <i class="fa-solid fa-tag mr-2" :class="categoryRemaining[cat] === 0 ? 'text-slate-600' : 'text-amber-400'"></i> {{ cat }}
                                     </span>
@@ -931,10 +936,16 @@
                                               :class="categoryRemaining[cat] === 0 ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'">
                                             剩餘 {{ categoryRemaining[cat] }} 題
                                         </span>
-                                        <i v-if="categoryRemaining[cat] > 0" class="fa-solid fa-chevron-right text-slate-600"></i>
+                                        <i v-if="categoryRemaining[cat] > 0" class="fa-solid" :class="mobileSelectedCategory === cat ? 'fa-circle-check text-amber-400' : 'fa-chevron-right text-slate-600'"></i>
                                     </div>
                                 </button>
                             </div>
+
+                            <button v-if="mobileSelectedCategory" 
+                                    @click="voteCategory(mobileSelectedCategory)"
+                                    class="w-full mt-3 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 animate-bounce">
+                                <i class="fa-solid fa-check"></i> 確認投票給【{{ mobileSelectedCategory }}】
+                            </button>
                         </div>
                     </div>
 
@@ -959,7 +970,7 @@
                         </div>
                         <div v-else class="space-y-2">
                             <div class="text-center mb-1 flex justify-between items-center px-1">
-                                <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請小組票選本輪戰術卡</span>
+                                <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請點選卡片，再按確認送出</span>
                                 <span class="text-xs font-oswald text-purple-300 font-bold">
                                     <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
@@ -968,19 +979,31 @@
                                 <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
                             </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
-                                <button @click="voteCard(card.id)" 
+                                <button @click="mobileSelectedCard = card.id" 
                                         :disabled="!gameState.isTimerRunning || gameState.timer < -1"
-                                        :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400 sports-btn-3d'"
-                                        class="w-full p-3.5 bg-slate-900 border-2 text-white rounded-2xl text-left transition shadow-md">
+                                        :class="[
+                                            !gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'sports-btn-3d',
+                                            mobileSelectedCard === card.id ? 'bg-purple-900/60 border-purple-400 ring-2 ring-purple-400' : 'bg-slate-900 border-purple-500/40'
+                                        ]"
+                                        class="w-full p-3.5 border-2 text-white rounded-2xl text-left transition shadow-md">
                                     <div class="font-bold text-xs text-amber-300 mb-0.5">{{ card.name }}</div>
                                     <div class="text-[10px] text-slate-300 leading-tight">{{ card.desc }}</div>
                                 </button>
                             </div>
-                            <button @click="voteCard('none')" 
+                            <button @click="mobileSelectedCard = 'none'" 
                                     :disabled="!gameState.isTimerRunning || gameState.timer < -1"
-                                    :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 sports-btn-3d'"
-                                    class="w-full py-2.5 bg-slate-900 border-2 border-slate-700 text-slate-400 rounded-2xl text-xs font-bold transition">
+                                    :class="[
+                                        !gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'sports-btn-3d',
+                                        mobileSelectedCard === 'none' ? 'bg-slate-800 border-amber-400 ring-2 ring-amber-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'
+                                    ]"
+                                    class="w-full py-2.5 border-2 rounded-2xl text-xs font-bold transition">
                                 不使用戰術卡 (一般攻防)
+                            </button>
+
+                            <button v-if="mobileSelectedCard !== null" 
+                                    @click="voteCard(mobileSelectedCard)"
+                                    class="w-full mt-3 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 animate-bounce">
+                                <i class="fa-solid fa-check"></i> 確認投給【{{ getCardTitleById(mobileSelectedCard) }}】
                             </button>
                         </div>
                     </div>
@@ -1010,7 +1033,7 @@
                             </div>
 
                             <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5">
-                                <span class="text-slate-300 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請討論後按鍵作答：</span>
+                                <span class="text-slate-300 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請點選選項，再按確認：</span>
                                 <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ displayTimerFormatted }}</span>
                             </div>
                             
@@ -1033,13 +1056,24 @@
                                 <div class="text-xs text-slate-300">您的選擇：<strong class="text-amber-400 font-oswald text-lg px-2 py-0.5 bg-slate-900 rounded-md border border-slate-800">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
                                 <p class="text-[10px] text-slate-400 pt-1">已透過雲端即時同步至舞台大螢幕...</p>
                             </div>
-                            <!-- ANSWER BUTTONS WITH OPTION TEXT -->
-                            <div v-else class="grid grid-cols-2 gap-2.5 pt-1">
-                                <button v-for="(optionText, key) in currentQuestion.options" :key="key"
-                                        @click="submitMobileAnswer(key)"
-                                        class="py-3.5 px-2.5 bg-slate-900 hover:bg-slate-800 active:bg-blue-600 border-2 border-slate-700 active:border-blue-400 rounded-2xl text-white font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[76px]">
-                                    <span class="text-2xl font-black font-oswald" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
-                                    <span class="text-xs sm:text-sm text-slate-200 font-noto text-center mt-1 leading-snug line-clamp-2 font-bold">{{ optionText }}</span>
+                            <!-- ANSWER BUTTONS WITH OPTION TEXT (兩階段選取確認) -->
+                            <div v-else class="space-y-3 pt-1">
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <button v-for="(optionText, key) in currentQuestion.options" :key="key"
+                                            @click="mobileSelectedAnswer = key"
+                                            :class="[
+                                                mobileSelectedAnswer === key ? 'bg-blue-900/60 border-amber-400 ring-2 ring-amber-400 shadow-amber-500/20' : 'bg-slate-900 border-slate-700 text-slate-200',
+                                                'py-3.5 px-2.5 border-2 rounded-2xl font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[76px]'
+                                            ]">
+                                        <span class="text-2xl font-black font-oswald" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
+                                        <span class="text-xs sm:text-sm font-noto text-center mt-1 leading-snug line-clamp-2 font-bold">{{ optionText }}</span>
+                                    </button>
+                                </div>
+
+                                <button v-if="mobileSelectedAnswer" 
+                                        @click="submitMobileAnswer(mobileSelectedAnswer)"
+                                        class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-emerald-400">
+                                    <i class="fa-solid fa-paper-plane"></i> 確認送出答案：【{{ mobileSelectedAnswer }}】
                                 </button>
                             </div>
                         </div>
@@ -1087,7 +1121,7 @@
 </div>
 
 <script>
-    const { createApp, ref, computed, reactive, onMounted } = Vue;
+    const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
 
     // Firebase 專案設定資訊
     const firebaseConfig = {
@@ -1127,6 +1161,11 @@
             const isAdminAuthenticated = ref(false);
             const adminPasswordInput = ref('');
             const adminPasswordError = ref(false);
+
+            // 手機端預選暫存 Ref
+            const mobileSelectedCategory = ref(null);
+            const mobileSelectedCard = ref(null);
+            const mobileSelectedAnswer = ref(null);
 
             const verifyAdminPassword = () => {
                 if (adminPasswordInput.value === 'tracypan') {
@@ -1303,6 +1342,12 @@
                 return counts;
             });
 
+            const getCardTitleById = (id) => {
+                if (id === 'none') return '不使用戰術卡';
+                const card = getActiveTeamAvailableCards().find(c => c.id === id);
+                return card ? card.name : '戰術卡';
+            };
+
             const updateRoute = () => {
                 const hash = window.location.hash.replace('#', '');
                 currentRoute.value = hash;
@@ -1405,6 +1450,11 @@
                 gameState.phase = phase;
                 stopTimer();
                 
+                // 重置手機端的預選 State
+                mobileSelectedCategory.value = null;
+                mobileSelectedCard.value = null;
+                mobileSelectedAnswer.value = null;
+
                 if (phase === 'CATEGORY_VOTE') {
                     gameState.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
                     gameState.tableVotes = {};
@@ -1578,6 +1628,9 @@
                 gameState.lastRevealResult = null;
                 gameState.showCardNotice = false;
                 
+                // 重置手機端預選狀態
+                mobileSelectedAnswer.value = null;
+
                 gameState.usedQuestionIds.push(selectedQ.id);
 
                 const questionTimer = selectedQ.id === 5 ? 40 : 30;
@@ -1678,8 +1731,9 @@
                 }
             };
 
-            // 樂觀 UI 鎖定 + 雲端單點更新
+            // 兩階段提交答案，避免誤觸或多手機拉扯
             const submitMobileAnswer = (key) => {
+                if (!key) return;
                 const tableKey = 'table_' + selectedMobileTable.value;
                 gameState.answers[tableKey] = key;
 
@@ -1690,38 +1744,36 @@
             };
 
             const voteCategory = (cat) => {
+                if (!cat) return;
                 const tableKey = 'table_' + selectedMobileTable.value;
                 if (gameState.tableVotes[tableKey]) return; 
 
-                if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
-                    gameState.tableVotes[tableKey] = true;
-                    gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
+                gameState.tableVotes[tableKey] = true;
+                gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
 
-                    const updates = {};
-                    updates['mlb_live_game_state/categoryVotes/' + cat] = gameState.categoryVotes[cat];
-                    updates['mlb_live_game_state/tableVotes/' + tableKey] = true;
-                    updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
-                    db.ref().update(updates);
-                }
+                const updates = {};
+                updates['mlb_live_game_state/categoryVotes/' + cat] = gameState.categoryVotes[cat];
+                updates['mlb_live_game_state/tableVotes/' + tableKey] = true;
+                updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
+                db.ref().update(updates);
             };
 
             const voteCard = (cardId) => {
+                if (!cardId) return;
                 const tableKey = 'table_' + selectedMobileTable.value;
                 if (gameState.tableCardVotes[tableKey]) return;
 
                 const cardObj = getActiveTeamAvailableCards().find(c => c.id === cardId);
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
-                if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
-                    gameState.tableCardVotes[tableKey] = cardId;
-                    gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+                gameState.tableCardVotes[tableKey] = cardId;
+                gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
 
-                    const updates = {};
-                    updates['mlb_live_game_state/cardVotes/' + cardId] = gameState.cardVotes[cardId];
-                    updates['mlb_live_game_state/tableCardVotes/' + tableKey] = cardId;
-                    updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
-                    db.ref().update(updates);
-                }
+                const updates = {};
+                updates['mlb_live_game_state/cardVotes/' + cardId] = gameState.cardVotes[cardId];
+                updates['mlb_live_game_state/tableCardVotes/' + tableKey] = cardId;
+                updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
+                db.ref().update(updates);
             };
 
             const simulateTableAnswers = () => {
@@ -1856,6 +1908,11 @@
                 gameState.cardVotes = { none: 0 };
                 gameState.tableCardVotes = {};
                 gameState.tableVotes = {};
+                
+                mobileSelectedCategory.value = null;
+                mobileSelectedCard.value = null;
+                mobileSelectedAnswer.value = null;
+
                 resetTimer();
                 systemMessage.value = '遊戲已完全重置，回到初始大廳。';
                 broadcastState();
@@ -1897,6 +1954,10 @@
                 currentRoundNumber,
                 currentMaxTimer,
                 displayTimerFormatted,
+                mobileSelectedCategory,
+                mobileSelectedCard,
+                mobileSelectedAnswer,
+                getCardTitleById,
                 getActiveTeamAvailableCards,
                 openNewWindow,
                 lockTable,
