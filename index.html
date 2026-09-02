@@ -350,7 +350,7 @@
                     <p class="text-sm text-slate-400 pt-2">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
                 </div>
 
-                <!-- PHASE: CATEGORY_VOTE (已修復：直接對齊 categories 陣列顯示 綜合時事) -->
+                <!-- PHASE: CATEGORY_VOTE -->
                 <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-3xl text-center space-y-6">
                     <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full inline-block font-bold text-sm">
                         <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
@@ -440,7 +440,7 @@
                     </div>
                 </div>
 
-                <!-- PHASE: QUESTION & REVEAL (優化正解高對比色塊) -->
+                <!-- PHASE: QUESTION & REVEAL -->
                 <div v-else-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="w-full max-w-4xl space-y-6">
                     <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
                         <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold px-3.5 py-1 rounded-full flex items-center gap-1.5">
@@ -829,32 +829,32 @@
         </section>
 
 
-        <!-- PAGE 3: 📱 手機玩家端獨立頁面 (#mobile - 兩階段點選與確認機制) -->
+        <!-- PAGE 3: 📱 手機玩家端獨立頁面 (#mobile) -->
         <section v-else-if="currentRoute === 'mobile'" class="flex-1 flex flex-col items-center justify-center py-4">
             
             <div class="mb-4 w-full max-w-sm bg-slate-900/90 border border-slate-800 p-3 rounded-2xl flex flex-col gap-2.5 shadow-xl backdrop-blur-md">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-300 font-bold flex items-center gap-1.5">
+                    <span class="text-sm text-slate-100 font-bold flex items-center gap-1.5">
                         <i class="fa-solid fa-chair text-amber-400"></i> 請設置您的桌號：
                     </span>
-                    <span v-if="isTableLocked" class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-600 px-2 py-0.5 rounded-full font-bold">
+                    <span v-if="isTableLocked" class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-600 px-2.5 py-0.5 rounded-full font-bold">
                         <i class="fa-solid fa-lock mr-1"></i>已鎖定
                     </span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <select v-model="selectedMobileTable" :disabled="isTableLocked" class="flex-1 bg-gray-800 border border-gray-700 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-mlbBlue disabled:opacity-60 disabled:cursor-not-allowed font-bold">
+                    <select v-model="selectedMobileTable" :disabled="isTableLocked" class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-mlbBlue disabled:opacity-60 disabled:cursor-not-allowed font-bold">
                         <option v-for="t in 20" :key="t" :value="t" :disabled="!isTableLocked && gameState.connectedTables.includes(t)">
                             #{{ t < 10 ? '0' + t : t }} 桌 ({{ t <= 10 ? '紅隊代表' : '藍隊代表' }}) {{ gameState.connectedTables.includes(t) && !isTableLocked ? ' - [已被佔用]' : '' }}
                         </option>
                     </select>
                     <button @click="lockTable()" :disabled="isTableLocked" 
                             :class="isTableLocked ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 shadow-md'"
-                            class="px-3 py-2.5 border rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0">
+                            class="px-3.5 py-2.5 border rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0">
                         <i class="fa-solid" :class="isTableLocked ? 'fa-lock' : 'fa-lock-open'"></i>
                         {{ isTableLocked ? '已鎖定' : '鎖定' }}
                     </button>
                 </div>
-                <p v-if="isTableLocked" class="text-[10px] text-slate-400 text-center">
+                <p v-if="isTableLocked" class="text-xs text-slate-300 text-center font-medium">
                     <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>桌號已鎖定，如需更改請通知主持人為您解鎖。
                 </p>
             </div>
@@ -869,11 +869,11 @@
                                   class="text-white font-oswald font-black text-xs px-3 py-1 rounded-full border shadow">
                                 TABLE #{{ selectedMobileTable < 10 ? '0' + selectedMobileTable : selectedMobileTable }}
                             </span>
-                            <span class="text-xs text-slate-200 font-bold">
+                            <span class="text-sm text-slate-100 font-bold">
                                 {{ selectedMobileTable <= 10 ? '紅隊 RED' : '藍隊 BLUE' }}
                             </span>
                         </div>
-                        <span class="text-[10px] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-amber-400 font-oswald font-bold">
+                        <span class="text-xs bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-md text-amber-400 font-oswald font-bold">
                             <i class="fa-solid fa-baseball mr-1"></i>VIP PASS
                         </span>
                     </div>
@@ -885,8 +885,8 @@
                         <div class="w-16 h-16 bg-emerald-950 text-emerald-400 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                             <i class="fa-solid fa-wifi"></i>
                         </div>
-                        <h3 class="text-xl font-black text-white tracking-wide">系統連線成功！</h3>
-                        <p class="text-xs text-slate-400 leading-relaxed">
+                        <h3 class="text-xl sm:text-2xl font-black text-white tracking-wide">系統連線成功！</h3>
+                        <p class="text-sm text-slate-200 leading-relaxed font-medium">
                             請等候主持人指示，準備與同桌 10 位夥伴挑戰 MLB 知識題！
                         </p>
                     </div>
@@ -895,30 +895,30 @@
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
-                            <h3 class="text-xl font-bold text-slate-300">防守階段</h3>
-                            <p class="text-xs text-slate-400">本局由敵隊攻擊，請等待敵隊票選題目類別。</p>
+                            <h3 class="text-xl font-bold text-slate-200">防守階段</h3>
+                            <p class="text-sm text-slate-300 font-medium">本局由敵隊攻擊，請等待敵隊票選題目類別。</p>
                         </div>
                         <div v-else-if="gameState.tableVotes['table_' + selectedMobileTable]" class="py-10 text-center space-y-4">
                             <div class="w-16 h-16 bg-emerald-950 text-emerald-400 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
                             <h3 class="text-xl font-bold text-white">投票已鎖定</h3>
-                            <p class="text-xs text-slate-400">您已完成本輪投票，請等待大螢幕揭曉結果！</p>
+                            <p class="text-sm text-slate-300 font-medium">您已完成本輪投票，請等待大螢幕揭曉結果！</p>
                         </div>
                         <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-red-500 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-red-400">投票時間已結束</h3>
-                            <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
+                            <p class="text-sm text-slate-300 font-medium">表單已鎖定，請等待大螢幕揭曉結果！</p>
                         </div>
                         <div v-else>
                             <div class="text-center mb-2 flex justify-between items-center px-1">
-                                <span class="text-xs text-amber-400 font-bold">請點選意向，再按確認送出</span>
-                                <span class="text-xs font-oswald text-amber-400 font-bold">
+                                <span class="text-sm text-amber-300 font-bold">請點選意向，再按確認送出</span>
+                                <span class="text-sm font-oswald text-amber-300 font-bold">
                                     <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
-                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-xl border border-amber-800/60 mb-3 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
+                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-xs text-amber-300/90 text-center bg-amber-950/40 p-2.5 rounded-xl border border-amber-800/60 mb-3 animate-pulse font-medium">
+                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數開始...
                             </p>
                             <div v-for="cat in categories" :key="cat" class="w-full mb-2.5">
                                 <button @click="mobileSelectedCategory = cat" 
@@ -927,24 +927,25 @@
                                             categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'sports-btn-3d',
                                             mobileSelectedCategory === cat ? 'bg-amber-600/40 border-amber-400 ring-2 ring-amber-400 text-white font-extrabold' : 'bg-slate-900 border-slate-700 text-white'
                                         ]"
-                                        class="w-full py-3 border-2 rounded-2xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
+                                        class="w-full py-3.5 border-2 rounded-2xl text-sm font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
                                     <span :class="{ 'line-through text-slate-500': categoryRemaining[cat] === 0 }">
                                         <i class="fa-solid fa-tag mr-2" :class="categoryRemaining[cat] === 0 ? 'text-slate-600' : 'text-amber-400'"></i> {{ cat }}
                                     </span>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-[10px] px-2 py-0.5 rounded font-oswald font-normal tracking-wider"
+                                        <span class="text-xs px-2.5 py-0.5 rounded font-oswald font-bold tracking-wider"
                                               :class="categoryRemaining[cat] === 0 ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'">
                                             剩餘 {{ categoryRemaining[cat] }} 題
                                         </span>
-                                        <i v-if="categoryRemaining[cat] > 0" class="fa-solid" :class="mobileSelectedCategory === cat ? 'fa-circle-check text-amber-400' : 'fa-chevron-right text-slate-600'"></i>
+                                        <i v-if="categoryRemaining[cat] > 0" class="fa-solid" :class="mobileSelectedCategory === cat ? 'fa-circle-check text-amber-400 text-base' : 'fa-chevron-right text-slate-500'"></i>
                                     </div>
                                 </button>
                             </div>
 
-                            <button v-if="mobileSelectedCategory" 
+                            <!-- 投票鎖定按鈕：僅於倒數進行中 (isTimerRunning && timer > 0) 才顯示 -->
+                            <button v-if="mobileSelectedCategory && gameState.isTimerRunning && gameState.timer > 0" 
                                     @click="voteCategory(mobileSelectedCategory)"
-                                    class="w-full mt-3 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 animate-bounce">
-                                <i class="fa-solid fa-check"></i> 確認投票給【{{ mobileSelectedCategory }}】
+                                    class="w-full mt-3 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-amber-300">
+                                <i class="fa-solid fa-check-circle"></i> 確認投票給【{{ mobileSelectedCategory }}】
                             </button>
                         </div>
                     </div>
@@ -954,29 +955,29 @@
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
                             <h3 class="text-xl font-bold text-slate-300">防守階段</h3>
-                            <p class="text-xs text-slate-400">目前為敵方宣告戰術卡時間，請關注舞台大螢幕。</p>
+                            <p class="text-sm text-slate-300 font-medium">目前為敵方宣告戰術卡時間，請關注舞台大螢幕。</p>
                         </div>
                         <div v-else-if="gameState.tableCardVotes['table_' + selectedMobileTable]" class="py-10 text-center space-y-4">
                             <div class="w-16 h-16 bg-purple-950 text-purple-400 border-2 border-purple-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(168,85,247,0.3)]">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
                             </div>
                             <h3 class="text-xl font-bold text-white">戰術卡投票已鎖定</h3>
-                            <p class="text-xs text-slate-400">您已完成戰術卡小組投票，請等待主持人揭曉！</p>
+                            <p class="text-sm text-slate-300 font-medium">您已完成戰術卡小組投票，請等待主持人揭曉！</p>
                         </div>
                         <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-purple-400 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-purple-300">戰術卡投票時間已結束</h3>
-                            <p class="text-xs text-slate-400">表單已鎖定，請等待結算！</p>
+                            <p class="text-sm text-slate-300 font-medium">表單已鎖定，請等待結算！</p>
                         </div>
                         <div v-else class="space-y-2">
                             <div class="text-center mb-1 flex justify-between items-center px-1">
-                                <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請點選卡片，再按確認送出</span>
-                                <span class="text-xs font-oswald text-purple-300 font-bold">
+                                <span class="text-sm text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請點選卡片，再按確認送出</span>
+                                <span class="text-sm font-oswald text-purple-300 font-bold">
                                     <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
-                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-purple-300/90 text-center bg-purple-950/40 p-2 rounded-xl border border-purple-800/60 mb-2 animate-pulse">
-                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數...
+                            <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-xs text-purple-300/90 text-center bg-purple-950/40 p-2.5 rounded-xl border border-purple-800/60 mb-2 animate-pulse font-medium">
+                                <i class="fa-solid fa-pause mr-1"></i>請等待倒數開始...
                             </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
                                 <button @click="mobileSelectedCard = card.id" 
@@ -986,24 +987,25 @@
                                             mobileSelectedCard === card.id ? 'bg-purple-900/60 border-purple-400 ring-2 ring-purple-400' : 'bg-slate-900 border-purple-500/40'
                                         ]"
                                         class="w-full p-3.5 border-2 text-white rounded-2xl text-left transition shadow-md">
-                                    <div class="font-bold text-xs text-amber-300 mb-0.5">{{ card.name }}</div>
-                                    <div class="text-[10px] text-slate-300 leading-tight">{{ card.desc }}</div>
+                                    <div class="font-bold text-sm text-amber-300 mb-1">{{ card.name }}</div>
+                                    <div class="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">{{ card.desc }}</div>
                                 </button>
                             </div>
                             <button @click="mobileSelectedCard = 'none'" 
                                     :disabled="!gameState.isTimerRunning || gameState.timer < -1"
                                     :class="[
                                         !gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'sports-btn-3d',
-                                        mobileSelectedCard === 'none' ? 'bg-slate-800 border-amber-400 ring-2 ring-amber-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'
+                                        mobileSelectedCard === 'none' ? 'bg-slate-800 border-amber-400 ring-2 ring-amber-400 text-white font-bold' : 'bg-slate-900 border-slate-700 text-slate-300'
                                     ]"
-                                    class="w-full py-2.5 border-2 rounded-2xl text-xs font-bold transition">
+                                    class="w-full py-3 border-2 rounded-2xl text-sm font-bold transition">
                                 不使用戰術卡 (一般攻防)
                             </button>
 
-                            <button v-if="mobileSelectedCard !== null" 
+                            <!-- 戰術卡鎖定按鈕：僅於倒數進行中 (isTimerRunning && timer > 0) 才顯示 -->
+                            <button v-if="mobileSelectedCard !== null && gameState.isTimerRunning && gameState.timer > 0" 
                                     @click="voteCard(mobileSelectedCard)"
-                                    class="w-full mt-3 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 animate-bounce">
-                                <i class="fa-solid fa-check"></i> 確認投給【{{ getCardTitleById(mobileSelectedCard) }}】
+                                    class="w-full mt-3 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-purple-400">
+                                <i class="fa-solid fa-check-circle"></i> 確認投給【{{ getCardTitleById(mobileSelectedCard) }}】
                             </button>
                         </div>
                     </div>
@@ -1020,7 +1022,7 @@
                                 </div>
                                 <p class="text-sm sm:text-base font-bold text-slate-200 leading-relaxed whitespace-pre-line">{{ currentQuestion.question }}</p>
                             </div>
-                            <p class="text-center text-xs text-slate-500 pt-3">目前為敵方作答時間，請觀戰與準備下一輪。</p>
+                            <p class="text-center text-sm text-slate-400 pt-3 font-medium">目前為敵方作答時間，請觀戰與準備下一輪。</p>
                         </div>
                         <div v-else class="space-y-3">
                             <div class="bg-slate-900 border-2 border-slate-700/80 p-4 rounded-2xl text-left space-y-2 shadow-xl">
@@ -1032,45 +1034,46 @@
                                 </p>
                             </div>
 
-                            <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5">
-                                <span class="text-slate-300 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請點選選項，再按確認：</span>
-                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ displayTimerFormatted }}</span>
+                            <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-1.5">
+                                <span class="text-slate-200 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請點選選項，再按確認：</span>
+                                <span class="text-amber-400 font-bold font-oswald text-base">剩餘: 00:{{ displayTimerFormatted }}</span>
                             </div>
                             
                             <!-- HARD TIMEOUT LOCK UI -->
                             <div v-if="gameState.timer < -1" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-hourglass-end text-4xl text-red-500 mb-1 animate-bounce"></i>
                                 <h3 class="text-lg font-bold text-red-400">作答時間已結束</h3>
-                                <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
+                                <p class="text-sm text-slate-300 font-medium">表單已鎖定，請等待大螢幕揭曉結果！</p>
                             </div>
                             <!-- PAUSE LOCK UI -->
                             <div v-else-if="!gameState.isTimerRunning" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-pause text-4xl text-amber-500 mb-1"></i>
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
-                                <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
+                                <p class="text-sm text-slate-300 font-medium">請等待主持人開放作答時間。</p>
                             </div>
                             <!-- SUCCESS SUBMIT UI -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
-                                <div class="text-base font-bold text-emerald-300">答案已成功提交！</div>
-                                <div class="text-xs text-slate-300">您的選擇：<strong class="text-amber-400 font-oswald text-lg px-2 py-0.5 bg-slate-900 rounded-md border border-slate-800">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
-                                <p class="text-[10px] text-slate-400 pt-1">已透過雲端即時同步至舞台大螢幕...</p>
+                                <div class="text-lg font-bold text-emerald-300">答案已成功提交！</div>
+                                <div class="text-sm text-slate-200 font-medium">您的選擇：<strong class="text-amber-400 font-oswald text-xl px-2.5 py-0.5 bg-slate-900 rounded-md border border-slate-800">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
+                                <p class="text-xs text-slate-400 pt-1">已透過雲端即時同步至舞台大螢幕...</p>
                             </div>
-                            <!-- ANSWER BUTTONS WITH OPTION TEXT (兩階段選取確認) -->
+                            <!-- ANSWER BUTTONS WITH OPTION TEXT (完全不割字、高對比大字體) -->
                             <div v-else class="space-y-3 pt-1">
                                 <div class="grid grid-cols-2 gap-2.5">
                                     <button v-for="(optionText, key) in currentQuestion.options" :key="key"
                                             @click="mobileSelectedAnswer = key"
                                             :class="[
-                                                mobileSelectedAnswer === key ? 'bg-blue-900/60 border-amber-400 ring-2 ring-amber-400 shadow-amber-500/20' : 'bg-slate-900 border-slate-700 text-slate-200',
-                                                'py-3.5 px-2.5 border-2 rounded-2xl font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[76px]'
+                                                mobileSelectedAnswer === key ? 'bg-blue-900/80 border-amber-400 ring-2 ring-amber-400 shadow-amber-500/30' : 'bg-slate-900 border-slate-700 text-slate-100',
+                                                'py-3.5 px-2.5 border-2 rounded-2xl font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[80px] h-auto'
                                             ]">
                                         <span class="text-2xl font-black font-oswald" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
-                                        <span class="text-xs sm:text-sm font-noto text-center mt-1 leading-snug line-clamp-2 font-bold">{{ optionText }}</span>
+                                        <span class="text-sm sm:text-base font-noto text-center mt-1 leading-snug font-bold text-white whitespace-normal break-words">{{ optionText }}</span>
                                     </button>
                                 </div>
 
-                                <button v-if="mobileSelectedAnswer" 
+                                <!-- 答題鎖定按鈕：僅於倒數進行中 (isTimerRunning && timer > 0) 才顯示 -->
+                                <button v-if="mobileSelectedAnswer && gameState.isTimerRunning && gameState.timer > 0" 
                                         @click="submitMobileAnswer(mobileSelectedAnswer)"
                                         class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-emerald-400">
                                     <i class="fa-solid fa-paper-plane"></i> 確認送出答案：【{{ mobileSelectedAnswer }}】
@@ -1084,7 +1087,7 @@
                         <div class="text-5xl font-oswald font-black text-emerald-400 my-2 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
                             {{ currentQuestion.answer }}
                         </div>
-                        <div class="text-xs bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-slate-300 leading-relaxed text-left shadow-inner">
+                        <div class="text-xs sm:text-sm bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-slate-200 leading-relaxed text-left shadow-inner">
                             {{ currentQuestion.explanation }}
                         </div>
                     </div>
@@ -1348,6 +1351,13 @@
                 return card ? card.name : '戰術卡';
             };
 
+            // 自動重置預選 Ref，確保進入新階段/新題目時不會有預設勾選
+            watch(() => [gameState.phase, gameState.currentQuestionIndex, gameState.activeTeam], () => {
+                mobileSelectedCategory.value = null;
+                mobileSelectedCard.value = null;
+                mobileSelectedAnswer.value = null;
+            });
+
             const updateRoute = () => {
                 const hash = window.location.hash.replace('#', '');
                 currentRoute.value = hash;
@@ -1369,12 +1379,10 @@
                         if (data.showCardNotice === undefined) data.showCardNotice = false;
                         if (!data.lastRevealResult) data.lastRevealResult = null;
 
-                        // 清除舊分類名稱 '綜合題'（避免干擾雲端讀取）
                         if (data.categoryVotes) {
                             delete data.categoryVotes['綜合題'];
                         }
 
-                        // 自動同步校正道具卡最新名稱與說明
                         if (data.redCards) {
                             data.redCards.forEach(c => {
                                 const def = defaultRedCards.find(d => d.id === c.id);
@@ -1450,7 +1458,6 @@
                 gameState.phase = phase;
                 stopTimer();
                 
-                // 重置手機端的預選 State
                 mobileSelectedCategory.value = null;
                 mobileSelectedCard.value = null;
                 mobileSelectedAnswer.value = null;
@@ -1628,7 +1635,6 @@
                 gameState.lastRevealResult = null;
                 gameState.showCardNotice = false;
                 
-                // 重置手機端預選狀態
                 mobileSelectedAnswer.value = null;
 
                 gameState.usedQuestionIds.push(selectedQ.id);
@@ -1649,7 +1655,7 @@
                 }
             };
 
-            // 壓秒防護的核心倒數計時器
+            // 倒數計時器
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
@@ -1731,9 +1737,13 @@
                 }
             };
 
-            // 兩階段提交答案，避免誤觸或多手機拉扯
+            // 手機提交答案 (含倒數進行中之硬保護)
             const submitMobileAnswer = (key) => {
                 if (!key) return;
+                if (!gameState.isTimerRunning || gameState.timer <= 0) {
+                    alert('非倒數期間無法提交答案！');
+                    return;
+                }
                 const tableKey = 'table_' + selectedMobileTable.value;
                 gameState.answers[tableKey] = key;
 
@@ -1743,8 +1753,13 @@
                 db.ref().update(updates);
             };
 
+            // 手機類別投票 (含倒數進行中之硬保護)
             const voteCategory = (cat) => {
                 if (!cat) return;
+                if (!gameState.isTimerRunning || gameState.timer <= 0) {
+                    alert('非倒數期間無法送出投票！');
+                    return;
+                }
                 const tableKey = 'table_' + selectedMobileTable.value;
                 if (gameState.tableVotes[tableKey]) return; 
 
@@ -1758,8 +1773,13 @@
                 db.ref().update(updates);
             };
 
+            // 手機戰術卡投票 (含倒數進行中之硬保護)
             const voteCard = (cardId) => {
                 if (!cardId) return;
+                if (!gameState.isTimerRunning || gameState.timer <= 0) {
+                    alert('非倒數期間無法送出投票！');
+                    return;
+                }
                 const tableKey = 'table_' + selectedMobileTable.value;
                 if (gameState.tableCardVotes[tableKey]) return;
 
