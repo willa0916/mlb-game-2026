@@ -987,8 +987,8 @@
                                             mobileSelectedCard === card.id ? 'bg-purple-900/60 border-purple-400 ring-2 ring-purple-400' : 'bg-slate-900 border-purple-500/40'
                                         ]"
                                         class="w-full p-3.5 border-2 text-white rounded-2xl text-left transition shadow-md">
-                                    <div class="font-bold text-sm text-amber-300 mb-1">{{ card.name }}</div>
-                                    <div class="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">{{ card.desc }}</div>
+                                    <div class="font-bold text-base sm:text-lg text-amber-300 mb-1">{{ card.name }}</div>
+                                    <div class="text-sm sm:text-base text-slate-100 font-normal leading-relaxed">{{ card.desc }}</div>
                                 </button>
                             </div>
                             <button @click="mobileSelectedCard = 'none'" 
@@ -997,14 +997,14 @@
                                         !gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'sports-btn-3d',
                                         mobileSelectedCard === 'none' ? 'bg-slate-800 border-amber-400 ring-2 ring-amber-400 text-white font-bold' : 'bg-slate-900 border-slate-700 text-slate-300'
                                     ]"
-                                    class="w-full py-3 border-2 rounded-2xl text-sm font-bold transition">
+                                    class="w-full py-3.5 border-2 rounded-2xl text-base font-bold transition">
                                 不使用戰術卡 (一般攻防)
                             </button>
 
                             <!-- 戰術卡鎖定按鈕：僅於倒數進行中 (isTimerRunning && timer > 0) 才顯示 -->
                             <button v-if="mobileSelectedCard !== null && gameState.isTimerRunning && gameState.timer > 0" 
                                     @click="voteCard(mobileSelectedCard)"
-                                    class="w-full mt-3 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-purple-400">
+                                    class="w-full mt-3 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-xl text-lg transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-purple-400">
                                 <i class="fa-solid fa-check-circle"></i> 確認投給【{{ getCardTitleById(mobileSelectedCard) }}】
                             </button>
                         </div>
@@ -1015,48 +1015,48 @@
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="space-y-3">
                             <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl text-left space-y-2 shadow-inner">
                                 <div class="flex justify-between items-center">
-                                    <span class="bg-slate-800 text-slate-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-slate-700">
+                                    <span class="bg-slate-800 text-slate-300 text-sm font-bold px-3 py-1 rounded-full border border-slate-700">
                                         <i class="fa-solid fa-shield-halved text-amber-400 mr-1"></i> 防守觀戰中
                                     </span>
-                                    <span class="text-xs text-slate-400 font-oswald font-bold">{{ currentQuestion.category }}</span>
+                                    <span class="text-sm text-slate-300 font-oswald font-bold">{{ currentQuestion.category }}</span>
                                 </div>
-                                <p class="text-sm sm:text-base font-bold text-slate-200 leading-relaxed whitespace-pre-line">{{ currentQuestion.question }}</p>
+                                <p class="text-base sm:text-lg font-bold text-slate-100 leading-relaxed whitespace-pre-line">{{ currentQuestion.question }}</p>
                             </div>
-                            <p class="text-center text-sm text-slate-400 pt-3 font-medium">目前為敵方作答時間，請觀戰與準備下一輪。</p>
+                            <p class="text-center text-base text-slate-300 pt-3 font-medium">目前為敵方作答時間，請觀戰與準備下一輪。</p>
                         </div>
                         <div v-else class="space-y-3">
                             <div class="bg-slate-900 border-2 border-slate-700/80 p-4 rounded-2xl text-left space-y-2 shadow-xl">
-                                <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold px-2.5 py-0.5 rounded-full inline-block">
+                                <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-sm font-bold px-3 py-1 rounded-full inline-block">
                                     <i class="fa-solid fa-list-check mr-1"></i> {{ currentQuestion.category }}
                                 </span>
-                                <p class="text-base font-bold text-white leading-relaxed whitespace-pre-line">
+                                <p class="text-lg sm:text-xl font-black text-white leading-relaxed whitespace-pre-line">
                                     {{ currentQuestion.question }}
                                 </p>
                             </div>
 
-                            <div class="flex justify-between items-center text-sm border-b border-slate-800 pb-1.5">
-                                <span class="text-slate-200 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請點選選項，再按確認：</span>
-                                <span class="text-amber-400 font-bold font-oswald text-base">剩餘: 00:{{ displayTimerFormatted }}</span>
+                            <div class="flex justify-between items-center text-base border-b border-slate-800 pb-1.5">
+                                <span class="text-slate-100 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請點選選項，再按確認：</span>
+                                <span class="text-amber-400 font-bold font-oswald text-lg">剩餘: 00:{{ displayTimerFormatted }}</span>
                             </div>
                             
                             <!-- HARD TIMEOUT LOCK UI -->
                             <div v-if="gameState.timer < -1" class="py-6 text-center space-y-2">
-                                <i class="fa-solid fa-hourglass-end text-4xl text-red-500 mb-1 animate-bounce"></i>
-                                <h3 class="text-lg font-bold text-red-400">作答時間已結束</h3>
-                                <p class="text-sm text-slate-300 font-medium">表單已鎖定，請等待大螢幕揭曉結果！</p>
+                                <i class="fa-solid fa-hourglass-end text-5xl text-red-500 mb-1 animate-bounce"></i>
+                                <h3 class="text-xl font-bold text-red-400">作答時間已結束</h3>
+                                <p class="text-base text-slate-200 font-medium">表單已鎖定，請等待大螢幕揭曉結果！</p>
                             </div>
                             <!-- PAUSE LOCK UI -->
                             <div v-else-if="!gameState.isTimerRunning" class="py-6 text-center space-y-2">
-                                <i class="fa-solid fa-pause text-4xl text-amber-500 mb-1"></i>
-                                <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
-                                <p class="text-sm text-slate-300 font-medium">請等待主持人開放作答時間。</p>
+                                <i class="fa-solid fa-pause text-5xl text-amber-500 mb-1"></i>
+                                <h3 class="text-xl font-bold text-amber-400">作答已暫停</h3>
+                                <p class="text-base text-slate-200 font-medium">請等待主持人開放作答時間。</p>
                             </div>
                             <!-- SUCCESS SUBMIT UI -->
-                            <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                                <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
-                                <div class="text-lg font-bold text-emerald-300">答案已成功提交！</div>
-                                <div class="text-sm text-slate-200 font-medium">您的選擇：<strong class="text-amber-400 font-oswald text-xl px-2.5 py-0.5 bg-slate-900 rounded-md border border-slate-800">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
-                                <p class="text-xs text-slate-400 pt-1">已透過雲端即時同步至舞台大螢幕...</p>
+                            <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-5 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                                <i class="fa-solid fa-circle-check text-4xl text-emerald-400"></i>
+                                <div class="text-xl font-black text-emerald-300">答案已成功提交！</div>
+                                <div class="text-base text-slate-100 font-bold">您的選擇：<strong class="text-amber-400 font-oswald text-2xl px-3 py-0.5 bg-slate-900 rounded-md border border-slate-800">{{ gameState.answers['table_' + selectedMobileTable] }}</strong></div>
+                                <p class="text-sm text-slate-300 pt-1 font-medium">已透過雲端即時同步至舞台大螢幕...</p>
                             </div>
                             <!-- ANSWER BUTTONS WITH OPTION TEXT (完全不割字、高對比大字體) -->
                             <div v-else class="space-y-3 pt-1">
@@ -1065,17 +1065,17 @@
                                             @click="mobileSelectedAnswer = key"
                                             :class="[
                                                 mobileSelectedAnswer === key ? 'bg-blue-900/80 border-amber-400 ring-2 ring-amber-400 shadow-amber-500/30' : 'bg-slate-900 border-slate-700 text-slate-100',
-                                                'py-3.5 px-2.5 border-2 rounded-2xl font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[80px] h-auto'
+                                                'py-4 px-3 border-2 rounded-2xl font-oswald transition sports-btn-3d flex flex-col items-center justify-center min-h-[85px] h-auto'
                                             ]">
-                                        <span class="text-2xl font-black font-oswald" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
-                                        <span class="text-sm sm:text-base font-noto text-center mt-1 leading-snug font-bold text-white whitespace-normal break-words">{{ optionText }}</span>
+                                        <span class="text-3xl font-black font-oswald" :class="{ 'text-emerald-400': key === 'O', 'text-red-400': key === 'X', 'text-amber-400': key !== 'O' && key !== 'X' }">{{ key }}</span>
+                                        <span class="text-base sm:text-lg font-noto text-center mt-1 leading-snug font-extrabold text-white whitespace-normal break-words">{{ optionText }}</span>
                                     </button>
                                 </div>
 
                                 <!-- 答題鎖定按鈕：僅於倒數進行中 (isTimerRunning && timer > 0) 才顯示 -->
                                 <button v-if="mobileSelectedAnswer && gameState.isTimerRunning && gameState.timer > 0" 
                                         @click="submitMobileAnswer(mobileSelectedAnswer)"
-                                        class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-base transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-emerald-400">
+                                        class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-lg sm:text-xl transition shadow-xl flex items-center justify-center gap-2 animate-bounce border-2 border-emerald-400">
                                     <i class="fa-solid fa-paper-plane"></i> 確認送出答案：【{{ mobileSelectedAnswer }}】
                                 </button>
                             </div>
@@ -1083,27 +1083,27 @@
                     </div>
 
                     <div v-else-if="gameState.phase === 'REVEAL'" class="text-center space-y-3 py-4">
-                        <div class="text-xs text-slate-400">本題正解為</div>
-                        <div class="text-5xl font-oswald font-black text-emerald-400 my-2 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                        <div class="text-sm text-slate-300 font-bold">本題正解為</div>
+                        <div class="text-6xl font-oswald font-black text-emerald-400 my-2 drop-shadow-[0_0_20px_rgba(16,185,129,0.6)]">
                             {{ currentQuestion.answer }}
                         </div>
-                        <div class="text-xs sm:text-sm bg-slate-900 p-3.5 rounded-2xl border border-slate-800 text-slate-200 leading-relaxed text-left shadow-inner">
+                        <div class="text-sm sm:text-base bg-slate-900 p-4 rounded-2xl border border-slate-800 text-slate-100 leading-relaxed text-left shadow-inner font-medium">
                             {{ currentQuestion.explanation }}
                         </div>
                     </div>
 
                     <div v-else-if="gameState.phase === 'GAME_OVER'" class="text-center space-y-6 py-6">
                         <i class="fa-solid fa-flag-checkered text-5xl text-amber-400"></i>
-                        <h3 class="text-2xl font-bold text-white">比賽結束</h3>
+                        <h3 class="text-3xl font-black text-white">比賽結束</h3>
                         <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl">
-                            <div class="text-sm text-slate-400 mb-2">最終比分</div>
+                            <div class="text-base text-slate-300 mb-2 font-bold">最終比分</div>
                             <div class="flex justify-around items-center">
-                                <div class="text-red-400 font-oswald font-black text-3xl">{{ gameState.scores.red }}</div>
-                                <div class="text-slate-500 font-bold">:</div>
-                                <div class="text-blue-400 font-oswald font-black text-3xl">{{ gameState.scores.blue }}</div>
+                                <div class="text-red-400 font-oswald font-black text-4xl">{{ gameState.scores.red }}</div>
+                                <div class="text-slate-500 font-bold text-2xl">:</div>
+                                <div class="text-blue-400 font-oswald font-black text-4xl">{{ gameState.scores.blue }}</div>
                             </div>
                         </div>
-                        <div class="text-lg font-bold" 
+                        <div class="text-xl font-black" 
                              :class="(gameState.scores.red === gameState.scores.blue) ? 'text-amber-400' : ((gameState.scores.red > gameState.scores.blue && selectedMobileTable <= 10) || (gameState.scores.blue > gameState.scores.red && selectedMobileTable > 10) ? 'text-emerald-400' : 'text-slate-400')">
                             {{ (gameState.scores.red === gameState.scores.blue) ? '雙方平手！' : ((gameState.scores.red > gameState.scores.blue && selectedMobileTable <= 10) || (gameState.scores.blue > gameState.scores.red && selectedMobileTable > 10) ? '🎉 恭喜獲勝！' : '再接再厲！') }}
                         </div>
