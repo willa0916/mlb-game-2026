@@ -49,9 +49,18 @@
             overflow-x: hidden;
         }
         .oswald { font-family: 'Oswald', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #040d18; }
-        ::-webkit-scrollbar-thumb { background: #1e3a60; border-radius: 3px; }
+
+        /* 徹底隱藏 Chrome, Safari, Edge, Firefox 捲軸（保有滾動功能且畫面極致乾淨） */
+        ::-webkit-scrollbar {
+            width: 0px !important;
+            height: 0px !important;
+            display: none !important;
+        }
+        html, body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
         .timer-bar { transition: width 1s linear, background-color 0.5s ease; }
 
         /* 棒球主題視覺增強效果 */
@@ -176,7 +185,8 @@
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col p-3 sm:p-6 max-w-7xl w-full mx-auto relative z-10">
+    <!-- 舞台畫面模式與控台模式時解除 max-w-7xl 限制，將區域全寬度擴展 (Full Width Layout) -->
+    <main class="flex-1 flex flex-col p-3 sm:p-6 w-full mx-auto relative z-10" :class="(currentRoute === 'screen' || currentRoute === 'admin') ? 'max-w-none px-4 sm:px-10 lg:px-12' : 'max-w-7xl'">
 
         <!-- PAGE 0: 系統門戶 (SYSTEM HUB) -->
         <section v-if="currentRoute === '' || currentRoute === 'hub'" class="flex-1 flex flex-col justify-center items-center py-8">
@@ -242,30 +252,31 @@
         </section>
 
 
-        <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen) -->
+        <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen - 藍隊在左，紅隊在右) -->
         <section v-else-if="currentRoute === 'screen'" class="flex-1 flex flex-col justify-between space-y-6">
             
-            <div class="bg-gradient-to-r from-mlbDark/90 via-slate-900/90 to-mlbDark/90 border-2 border-slate-700 rounded-3xl p-4 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border backdrop-blur-sm">
-                <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-blue-600"></div>
+            <!-- 上方記分板區塊 (電子大螢幕面板) -->
+            <div class="bg-gradient-to-r from-mlbDark/90 via-slate-900/90 to-mlbDark/90 border-2 border-slate-700 rounded-3xl p-5 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border backdrop-blur-sm">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-amber-400 to-red-600"></div>
                 
-                <div class="grid grid-cols-12 gap-4 items-center">
+                <div class="grid grid-cols-12 gap-6 items-center">
                     
-                    <!-- Red Team (Tables 1-10) -->
-                    <div class="col-span-4 bg-gradient-to-b from-red-950/80 to-slate-950 border-2 border-red-500/50 rounded-2xl p-3 sm:p-5 text-center relative overflow-hidden shadow-inner">
-                        <div class="absolute -right-6 -bottom-6 text-red-500/10 text-8xl font-black font-oswald select-none">RED</div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="text-xs sm:text-sm font-black text-red-400 tracking-wider flex items-center gap-1">
-                                <i class="fa-solid fa-baseball text-red-500"></i> RED TEAM (#01~#10)
+                    <!-- Blue Team (Tables 11-20) - 擺放於左邊 -->
+                    <div class="col-span-4 bg-gradient-to-b from-blue-950/80 to-slate-950 border-2 border-blue-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
+                        <div class="absolute -left-6 -bottom-6 text-blue-500/10 text-9xl font-black font-oswald select-none">BLUE</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm sm:text-lg font-black text-blue-400 tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-baseball text-blue-500"></i> BLUE TEAM (#11~#20)
                             </span>
-                            <span class="text-[11px] bg-red-900/80 text-red-200 border border-red-700 px-2 py-0.5 rounded-full font-bold">100人 (10桌)</span>
+                            <span class="text-xs sm:text-sm bg-blue-900/80 text-blue-200 border border-blue-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
                         </div>
-                        <div class="text-5xl sm:text-7xl font-oswald font-black text-red-300 my-1 tracking-tight score-glow-red">
-                            {{ gameState.scores.red }} <span class="text-sm sm:text-base text-slate-400 font-normal">分</span>
+                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-blue-300 my-1 tracking-tight score-glow-blue">
+                            {{ gameState.scores.blue }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
                         </div>
-                        <div class="flex justify-center gap-1.5 sm:gap-2 mt-2">
-                            <span v-for="card in gameState.redCards" :key="card.id" 
-                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-red-600 text-white shadow-md border-red-400'"
-                                  class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-md font-bold border">
+                        <div class="flex justify-center gap-2 mt-3 flex-wrap">
+                            <span v-for="card in gameState.blueCards" :key="card.id" 
+                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-blue-600 text-white shadow-md border-blue-400'"
+                                  class="text-xs sm:text-sm px-3 py-1 rounded-lg font-bold border">
                                 {{ card.name ? card.name.split(' ')[0] : '' }}
                             </span>
                         </div>
@@ -273,166 +284,166 @@
 
                     <!-- Center Timer & Round -->
                     <div class="col-span-4 text-center">
-                        <div class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-1 mb-2 shadow-inner">
-                            <i class="fa-solid fa-baseball-bat-ball text-amber-400 text-xs"></i>
-                            <span class="text-xs text-slate-400 font-oswald uppercase tracking-widest">INNING / 局數</span>
-                            <div class="text-lg sm:text-2xl font-oswald font-black text-amber-400 ml-1">
+                        <div class="inline-flex items-center gap-2 bg-slate-950 border border-slate-700/80 rounded-2xl px-5 py-2 mb-3 shadow-inner">
+                            <i class="fa-solid fa-baseball-bat-ball text-amber-400 text-base"></i>
+                            <span class="text-sm sm:text-base text-slate-400 font-oswald uppercase tracking-widest">INNING / 局數</span>
+                            <div class="text-2xl sm:text-4xl font-oswald font-black text-amber-400 ml-2">
                                 NO. {{ currentRoundNumber }} / {{ questions.length }}
                             </div>
                         </div>
-                        <div class="my-1">
-                            <div class="text-4xl sm:text-6xl font-oswald font-black tracking-widest"
+                        <div class="my-2">
+                            <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black tracking-widest drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                                  :class="gameState.timer <= 5 ? 'text-red-500 animate-pulse' : 'text-slate-100'">
                                 00:{{ displayTimerFormatted }}
                             </div>
                         </div>
-                        <div class="mt-2">
+                        <div class="mt-3">
                             <span :class="gameState.activeTeam === 'red' ? 'bg-red-600 border-red-400' : 'bg-blue-600 border-blue-400'" 
-                                  class="text-white text-xs font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-lg border">
-                                <i class="fa-solid fa-person-running mr-1"></i>當前進攻：{{ gameState.activeTeam === 'red' ? '紅隊 RED' : '藍隊 BLUE' }}
+                                  class="text-white text-base sm:text-xl font-black px-6 py-2 rounded-full uppercase tracking-wider shadow-lg border">
+                                <i class="fa-solid fa-person-running mr-2"></i>當前進攻：{{ gameState.activeTeam === 'red' ? '紅隊 RED' : '藍隊 BLUE' }}
                             </span>
                         </div>
                     </div>
 
-                    <!-- Blue Team (Tables 11-20) -->
-                    <div class="col-span-4 bg-gradient-to-b from-blue-950/80 to-slate-950 border-2 border-blue-500/50 rounded-2xl p-3 sm:p-5 text-center relative overflow-hidden shadow-inner">
-                        <div class="absolute -left-6 -bottom-6 text-blue-500/10 text-8xl font-black font-oswald select-none">BLUE</div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="text-xs sm:text-sm font-black text-blue-400 tracking-wider flex items-center gap-1">
-                                <i class="fa-solid fa-baseball text-blue-500"></i> BLUE TEAM (#11~#20)
+                    <!-- Red Team (Tables 1-10) - 擺放於右邊 -->
+                    <div class="col-span-4 bg-gradient-to-b from-red-950/80 to-slate-950 border-2 border-red-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
+                        <div class="absolute -right-6 -bottom-6 text-red-500/10 text-9xl font-black font-oswald select-none">RED</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm sm:text-lg font-black text-red-400 tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-baseball text-red-500"></i> RED TEAM (#01~#10)
                             </span>
-                            <span class="text-[11px] bg-blue-900/80 text-blue-200 border border-blue-700 px-2 py-0.5 rounded-full font-bold">100人 (10桌)</span>
+                            <span class="text-xs sm:text-sm bg-red-900/80 text-red-200 border border-red-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
                         </div>
-                        <div class="text-5xl sm:text-7xl font-oswald font-black text-blue-300 my-1 tracking-tight score-glow-blue">
-                            {{ gameState.scores.blue }} <span class="text-sm sm:text-base text-slate-400 font-normal">分</span>
+                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-red-300 my-1 tracking-tight score-glow-red">
+                            {{ gameState.scores.red }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
                         </div>
-                        <div class="flex justify-center gap-1.5 sm:gap-2 mt-2">
-                            <span v-for="card in gameState.blueCards" :key="card.id" 
-                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-blue-600 text-white shadow-md border-blue-400'"
-                                  class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-md font-bold border">
+                        <div class="flex justify-center gap-2 mt-3 flex-wrap">
+                            <span v-for="card in gameState.redCards" :key="card.id" 
+                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-red-600 text-white shadow-md border-red-400'"
+                                  class="text-xs sm:text-sm px-3 py-1 rounded-lg font-bold border">
                                 {{ card.name ? card.name.split(' ')[0] : '' }}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4 bg-slate-950 h-3.5 rounded-full overflow-hidden border border-slate-800 shadow-inner p-0.5">
+                <div class="mt-5 bg-slate-950 h-5 rounded-full overflow-hidden border border-slate-800 shadow-inner p-1">
                     <div class="h-full timer-bar rounded-full" 
                          :style="{ width: (Math.max(0, gameState.timer) / currentMaxTimer * 100) + '%' }"
                          :class="gameState.timer > 5 ? 'bg-emerald-500' : 'bg-red-500'"></div>
                 </div>
             </div>
 
-            <!-- 主舞台賽事播報面板 -->
-            <div class="bg-mlbCardBg/95 border-2 border-slate-700/80 rounded-3xl p-6 sm:p-8 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[380px] relative overflow-hidden jumbotron-border backdrop-blur-md">
+            <!-- 主舞台賽事播報面板 (極大化擴寬與字階) -->
+            <div class="bg-mlbCardBg/95 border-2 border-slate-700/80 rounded-3xl p-6 sm:p-10 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[450px] relative overflow-hidden jumbotron-border backdrop-blur-md">
                 
                 <!-- PHASE: LOBBY -->
-                <div v-if="gameState.phase === 'LOBBY'" class="w-full text-center space-y-6">
-                    <div class="inline-flex items-center gap-2 bg-mlbRed/20 text-mlbRed border border-mlbRed/40 px-4 py-1.5 rounded-full font-bold text-sm tracking-wider">
+                <div v-if="gameState.phase === 'LOBBY'" class="w-full text-center space-y-8">
+                    <div class="inline-flex items-center gap-2 bg-mlbRed/20 text-mlbRed border border-mlbRed/40 px-6 py-2 rounded-full font-bold text-lg sm:text-xl tracking-wider">
                         <i class="fa-solid fa-network-wired"></i> 全場 20 桌系統連線準備中
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-black text-white tracking-wide">請各桌代表掃描桌上 QR Code 鎖定桌號</h2>
+                    <h2 class="text-4xl sm:text-6xl font-black text-white tracking-wide">請各桌代表掃描桌上 QR Code 鎖定桌號</h2>
                     
-                    <div class="grid grid-cols-5 sm:grid-cols-10 gap-3 max-w-4xl mx-auto pt-4">
+                    <div class="grid grid-cols-5 sm:grid-cols-10 gap-4 w-full max-w-6xl mx-auto pt-4">
                         <div v-for="t in 20" :key="t" 
                              :class="[
-                                gameState.connectedTables.includes(t) ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-slate-900/90 border-slate-700 text-slate-500',
+                                gameState.connectedTables.includes(t) ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-slate-900/90 border-slate-700 text-slate-500',
                                 t <= 10 ? 'hover:border-red-400' : 'hover:border-blue-400'
                              ]"
-                             class="p-2 sm:p-3 border-2 rounded-2xl text-center transition flex flex-col items-center justify-center">
-                            <span class="text-xs font-oswald text-slate-400">TABLE</span>
-                            <span class="text-xl font-black font-oswald">#{{ t < 10 ? '0'+t : t }}</span>
-                            <span class="text-[10px] mt-1 px-1.5 py-0.2 rounded font-bold" :class="t <= 10 ? 'bg-red-900/60 text-red-300' : 'bg-blue-900/60 text-blue-300'">
+                             class="p-3 sm:p-4 border-2 rounded-2xl text-center transition flex flex-col items-center justify-center">
+                            <span class="text-sm sm:text-base font-oswald text-slate-400">TABLE</span>
+                            <span class="text-2xl sm:text-3xl font-black font-oswald">#{{ t < 10 ? '0'+t : t }}</span>
+                            <span class="text-xs sm:text-sm mt-1.5 px-2 py-0.5 rounded font-bold" :class="t <= 10 ? 'bg-red-900/60 text-red-300' : 'bg-blue-900/60 text-blue-300'">
                                 {{ t <= 10 ? '紅隊' : '藍隊' }}
                             </span>
                         </div>
                     </div>
-                    <p class="text-sm text-slate-400 pt-2">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
+                    <p class="text-lg sm:text-2xl text-slate-300 pt-3">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-3xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
                 </div>
 
                 <!-- PHASE: CATEGORY_VOTE -->
-                <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-3xl text-center space-y-6">
-                    <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full inline-block font-bold text-sm">
-                        <i class="fa-solid fa-check-to-slot mr-1.5"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
+                <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="w-full max-w-5xl text-center space-y-8">
+                    <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-6 py-2.5 rounded-full inline-block font-bold text-base sm:text-xl">
+                        <i class="fa-solid fa-check-to-slot mr-2"></i> 請 {{ gameState.activeTeam === 'red' ? '紅隊 (#01~#10桌)' : '藍隊 (#11~#20桌)' }} 手機投票選擇題目類別 (限時15秒)
                     </div>
-                    <h2 class="text-3xl font-black text-white tracking-wide">本輪題目類別票選中</h2>
+                    <h2 class="text-4xl sm:text-6xl font-black text-white tracking-wide">本輪題目類別票選中</h2>
 
-                    <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div class="grid grid-cols-2 gap-6 pt-4">
                         <div v-for="cat in categories" :key="cat" 
-                             class="bg-slate-900/90 border-2 border-slate-700 p-5 rounded-2xl text-left flex justify-between items-center relative overflow-hidden shadow-lg">
-                            <div v-if="categoryRemaining[cat] === 0" class="absolute inset-0 bg-black/80 flex items-center justify-center z-10 backdrop-blur-sm">
-                                <span class="text-red-400 font-black tracking-widest border-2 border-red-500/60 bg-red-950/90 px-4 py-1 rounded-full transform -rotate-12 shadow-xl">題庫已耗盡</span>
+                             class="bg-slate-900/90 border-2 border-slate-700 p-6 sm:p-8 rounded-3xl text-left flex justify-between items-center relative overflow-hidden shadow-2xl">
+                            <div v-if="categoryRemaining[cat] === 0" class="absolute inset-0 bg-black/85 flex items-center justify-center z-10 backdrop-blur-sm">
+                                <span class="text-red-400 text-2xl sm:text-3xl font-black tracking-widest border-4 border-red-500/60 bg-red-950/90 px-6 py-2 rounded-full transform -rotate-12 shadow-2xl">題庫已耗盡</span>
                             </div>
                             <div :class="{ 'opacity-40': categoryRemaining[cat] === 0 }">
-                                <span class="text-xs text-slate-400 flex items-center gap-2 mb-1">
+                                <span class="text-sm sm:text-base text-slate-400 flex items-center gap-2 mb-2">
                                     <span><i class="fa-solid fa-tag text-amber-400"></i> 分類</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded font-bold" 
+                                    <span class="text-xs sm:text-sm px-3 py-1 rounded-full font-bold" 
                                           :class="categoryRemaining[cat] > 0 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'">
                                         剩餘 {{ categoryRemaining[cat] }} 題
                                     </span>
                                 </span>
-                                <span class="text-xl font-bold text-white">{{ cat }}</span>
+                                <span class="text-2xl sm:text-4xl font-black text-white">{{ cat }}</span>
                             </div>
                             <div class="text-right" :class="{ 'opacity-40': categoryRemaining[cat] === 0 }">
-                                <span class="text-4xl font-oswald font-black text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">{{ gameState.categoryVotes[cat] || 0 }}</span>
-                                <span class="text-xs text-slate-400 block">票</span>
+                                <span class="text-5xl sm:text-7xl font-oswald font-black text-amber-400 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">{{ gameState.categoryVotes[cat] || 0 }}</span>
+                                <span class="text-sm sm:text-lg text-slate-400 block font-bold">票</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- PHASE: CARD_PLAY -->
-                <div v-else-if="gameState.phase === 'CARD_PLAY'" class="w-full text-center space-y-6">
-                    <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-4 py-1.5 rounded-full inline-block font-bold text-sm">
-                        <i class="fa-solid fa-crown mr-1.5"></i> 投票結果揭曉
+                <div v-else-if="gameState.phase === 'CARD_PLAY'" class="w-full max-w-5xl text-center space-y-8">
+                    <div class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-6 py-2 rounded-full inline-block font-bold text-base sm:text-xl">
+                        <i class="fa-solid fa-crown mr-2"></i> 投票結果揭曉
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-black text-white tracking-wide">
+                    <h2 class="text-4xl sm:text-5xl font-black text-white tracking-wide">
                         本輪選定類型：<span class="text-amber-400">【{{ gameState.selectedCategory || '結算中' }}】</span>
                     </h2>
-                    <div v-if="gameState.isTieVote" class="inline-block bg-amber-950/80 border border-amber-500/60 px-4 py-1 rounded-full text-xs text-amber-300 font-bold">
+                    <div v-if="gameState.isTieVote" class="inline-block bg-amber-950/80 border border-amber-500/60 px-5 py-1.5 rounded-full text-sm sm:text-base text-amber-300 font-bold">
                         ⚡ 出現同票！系統已從同票最高類別中隨機決選【{{ gameState.selectedCategory }}】
                     </div>
                     
-                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 p-6 sm:p-8 rounded-3xl max-w-3xl mx-auto shadow-2xl mt-4"
+                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 p-6 sm:p-10 rounded-3xl w-full shadow-2xl mt-4"
                          :class="gameState.activeTeam === 'red' ? 'border-red-500/60 shadow-red-950/30' : 'border-blue-500/60 shadow-blue-950/30'">
-                        <div class="text-xs sm:text-sm font-black uppercase tracking-wider mb-4 flex justify-between items-center" :class="gameState.activeTeam === 'red' ? 'text-red-400' : 'text-blue-400'">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-baseball-bat-ball"></i> 進攻方 {{ gameState.activeTeam === 'red' ? '紅隊 RED' : '藍隊 BLUE' }} 戰術卡小組票選狀況</span>
-                            <span class="text-xs text-amber-400 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>小組投票中 (限時15秒)</span>
+                        <div class="text-base sm:text-xl font-black uppercase tracking-wider mb-6 flex justify-between items-center" :class="gameState.activeTeam === 'red' ? 'text-red-400' : 'text-blue-400'">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-baseball-bat-ball"></i> 進攻方 {{ gameState.activeTeam === 'red' ? '紅隊 RED' : '藍隊 BLUE' }} 戰術卡小組票選狀況</span>
+                            <span class="text-sm sm:text-base text-amber-400 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>小組投票中 (限時15秒)</span>
                         </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 text-left">
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" 
-                                 class="bg-slate-900/90 p-4 rounded-2xl border-2 flex justify-between items-start gap-3 transition"
-                                 :class="(gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === card.id) ? 'border-amber-400 ring-2 ring-amber-400/50 bg-amber-950/20' : 'border-slate-800'">
+                                 class="bg-slate-900/90 p-5 rounded-2xl border-2 flex justify-between items-start gap-4 transition"
+                                 :class="(gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === card.id) ? 'border-amber-400 ring-4 ring-amber-400/50 bg-amber-950/30' : 'border-slate-800'">
                                 <div class="flex-1">
-                                    <div class="text-sm sm:text-base font-bold text-white">{{ card.name }}</div>
-                                    <div class="text-xs text-slate-300 mt-1 leading-normal">{{ card.desc }}</div>
+                                    <div class="text-xl sm:text-2xl font-black text-white">{{ card.name }}</div>
+                                    <div class="text-sm sm:text-base text-slate-200 mt-1.5 leading-normal font-medium">{{ card.desc }}</div>
                                 </div>
-                                <div class="text-right shrink-0 min-w-[55px] bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                                    <span class="text-2xl font-oswald font-black text-amber-400">{{ gameState.cardVotes[card.id] || 0 }}</span>
-                                    <span class="text-[10px] text-slate-400 block font-bold">票</span>
+                                <div class="text-right shrink-0 min-w-[70px] bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800">
+                                    <span class="text-3xl sm:text-5xl font-oswald font-black text-amber-400">{{ gameState.cardVotes[card.id] || 0 }}</span>
+                                    <span class="text-xs sm:text-sm text-slate-400 block font-bold">票</span>
                                 </div>
                             </div>
-                            <div class="bg-slate-900/90 p-4 rounded-2xl border-2 border-slate-800 flex justify-between items-start gap-3"
+                            <div class="bg-slate-900/90 p-5 rounded-2xl border-2 border-slate-800 flex justify-between items-start gap-4"
                                  :class="(!gameState.activeCards[gameState.activeTeam] && gameState.cardVotes['none'] > 0) ? 'border-slate-600' : 'border-slate-800'">
                                 <div class="flex-1">
-                                    <div class="text-sm sm:text-base font-bold text-slate-300">不發動卡片</div>
-                                    <div class="text-xs text-slate-400 mt-1 leading-normal">標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣</div>
+                                    <div class="text-xl sm:text-2xl font-black text-slate-300">不發動卡片</div>
+                                    <div class="text-sm sm:text-base text-slate-400 mt-1.5 leading-normal font-medium">標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣</div>
                                 </div>
-                                <div class="text-right shrink-0 min-w-[55px] bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-                                    <span class="text-2xl font-oswald font-black text-slate-400">{{ gameState.cardVotes['none'] || 0 }}</span>
-                                    <span class="text-[10px] text-slate-400 block font-bold">票</span>
+                                <div class="text-right shrink-0 min-w-[70px] bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800">
+                                    <span class="text-3xl sm:text-5xl font-oswald font-black text-slate-400">{{ gameState.cardVotes['none'] || 0 }}</span>
+                                    <span class="text-xs sm:text-sm text-slate-400 block font-bold">票</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 戰術卡發動效果說明框 -->
-                        <div class="mt-4 pt-4 border-t border-slate-800/80 text-left bg-slate-950/90 p-4 rounded-2xl border border-slate-800/80 shadow-inner">
-                            <div class="text-sm text-slate-400 font-bold mb-1 flex items-center justify-between">
-                                <span><i class="fa-solid fa-bullhorn text-amber-400 mr-1.5 text-base"></i>本輪確定發動戰術卡：</span>
-                                <span class="text-amber-300 font-extrabold text-base sm:text-lg">{{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].name : '無 (一般攻防)' }}</span>
+                        <div class="mt-6 pt-5 border-t border-slate-800/80 text-left bg-slate-950/90 p-5 rounded-2xl border border-slate-800/80 shadow-inner">
+                            <div class="text-lg sm:text-2xl text-slate-300 font-bold mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-bullhorn text-amber-400 mr-2 text-xl sm:text-2xl"></i>本輪確定發動戰術卡：</span>
+                                <span class="text-amber-300 font-black text-2xl sm:text-3xl">{{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].name : '無 (一般攻防)' }}</span>
                             </div>
-                            <div class="text-sm text-slate-200 leading-relaxed pt-1.5 border-t border-slate-800/60 mt-1">
+                            <div class="text-base sm:text-xl text-slate-100 leading-relaxed pt-2 border-t border-slate-800/60 mt-2 font-medium">
                                 <span class="text-amber-400 font-bold">卡片效果說明：</span>
                                 {{ gameState.activeCards[gameState.activeTeam] ? gameState.activeCards[gameState.activeTeam].desc : '標準計分模式：進攻方每桌答對 +2 分，答錯不倒扣。' }}
                             </div>
@@ -440,131 +451,131 @@
                     </div>
                 </div>
 
-                <!-- PHASE: QUESTION & REVEAL -->
-                <div v-else-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="w-full max-w-4xl space-y-6">
-                    <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
-                        <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold px-3.5 py-1 rounded-full flex items-center gap-1.5">
+                <!-- PHASE: QUESTION & REVEAL (全寬度投影畫面、超粗體特大字階) -->
+                <div v-else-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="w-full max-w-6xl space-y-8">
+                    <div class="flex items-center justify-between border-b-2 border-slate-700/80 pb-4">
+                        <span class="bg-blue-600/30 text-blue-300 border border-blue-500/40 text-base sm:text-xl font-black px-5 py-1.5 rounded-full flex items-center gap-2">
                             <i class="fa-solid fa-list-check"></i> {{ currentQuestion.category }}
                         </span>
-                        <span class="text-xs text-slate-400 font-oswald font-bold">
+                        <span class="text-base sm:text-xl text-slate-300 font-oswald font-black tracking-wide">
                             INNING {{ currentRoundNumber }} / {{ questions.length }}
                         </span>
                     </div>
 
-                    <h2 class="text-2xl sm:text-3xl font-black text-white leading-relaxed text-left whitespace-pre-line tracking-wide">
+                    <h2 class="text-3xl sm:text-5xl font-black text-white leading-relaxed text-left whitespace-pre-line tracking-wide">
                         {{ currentQuestion.question }}
                     </h2>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-3">
                         <div v-for="(optionText, key) in currentQuestion.options" :key="key"
                              :class="[
                                 gameState.phase === 'REVEAL'
                                     ? (key === currentQuestion.answer 
-                                        ? 'bg-emerald-600 border-emerald-400 text-white font-black ring-4 ring-emerald-400/60 shadow-[0_0_30px_rgba(16,185,129,0.8)] scale-[1.02]' 
+                                        ? 'bg-emerald-600 border-emerald-400 text-white font-black ring-4 ring-emerald-400/60 shadow-[0_0_40px_rgba(16,185,129,0.8)] scale-[1.02]' 
                                         : 'bg-slate-950/85 border-slate-800 text-slate-500 opacity-35')
                                     : 'bg-slate-900/90 border-slate-700/80 text-slate-100'
                              ]"
-                             class="p-4 rounded-2xl border-2 flex items-center gap-3.5 transition-all duration-300">
+                             class="p-5 sm:p-6 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 shadow-xl">
                             <span :class="gameState.phase === 'REVEAL' && key === currentQuestion.answer ? 'bg-emerald-300 text-slate-950 font-black' : 'bg-slate-800 text-amber-400 border border-amber-500/40'"
-                                  class="w-10 h-10 rounded-xl flex items-center justify-center font-oswald font-black text-xl flex-shrink-0 shadow">
+                                  class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center font-oswald font-black text-2xl sm:text-4xl flex-shrink-0 shadow">
                                 {{ key }}
                             </span>
-                            <span class="text-base sm:text-lg font-bold">{{ optionText }}</span>
+                            <span class="text-xl sm:text-3xl font-black text-white leading-snug whitespace-normal break-words">{{ optionText }}</span>
                         </div>
                     </div>
 
-                    <div v-if="gameState.phase === 'QUESTION'" class="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 mt-4 shadow-inner">
-                        <div class="flex justify-between items-center mb-2 text-xs">
-                            <span class="text-slate-400 font-bold flex items-center gap-1.5">
-                                <i class="fa-solid fa-spinner fa-spin text-amber-400"></i> 進攻方代表作答進度
+                    <div v-if="gameState.phase === 'QUESTION'" class="bg-slate-950/90 border border-slate-800 rounded-2xl p-5 mt-6 shadow-inner">
+                        <div class="flex justify-between items-center mb-3 text-sm sm:text-base">
+                            <span class="text-slate-300 font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-spinner fa-spin text-amber-400 text-lg"></i> 進攻方代表作答進度
                             </span>
-                            <span class="text-amber-400 font-bold font-oswald text-sm">{{ submittedTablesCount }} / 10 桌已送出答案</span>
+                            <span class="text-amber-400 font-bold font-oswald text-xl sm:text-2xl">{{ submittedTablesCount }} / 10 桌已送出答案</span>
                         </div>
-                        <div class="grid grid-cols-10 gap-1.5 pt-1">
+                        <div class="grid grid-cols-10 gap-2 pt-1">
                             <div v-for="t in activeTeamTables" :key="t" 
-                                 :class="gameState.answers['table_'+t] ? 'bg-emerald-500 text-white shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-800 text-slate-600'"
-                                 class="text-[11px] font-oswald py-1 rounded-lg text-center font-bold">
+                                 :class="gameState.answers['table_'+t] ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.6)]' : 'bg-slate-800 text-slate-600'"
+                                 class="text-sm sm:text-base font-oswald py-2 rounded-xl text-center font-bold">
                                 #{{ t < 10 ? '0'+t : t }}
                             </div>
                         </div>
                     </div>
 
-                    <!-- 揭曉答案戰報結算專區 -->
-                    <div v-if="gameState.phase === 'REVEAL'" class="space-y-4 mt-4">
-                        <div v-if="gameState.lastRevealResult" class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-400/90 p-5 rounded-3xl text-center shadow-2xl space-y-3">
-                            <div class="text-sm font-black text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-trophy text-base"></i> 本題攻防戰報結算
+                    <!-- 揭曉答案戰報結算專區 (投影視域放大) -->
+                    <div v-if="gameState.phase === 'REVEAL'" class="space-y-5 mt-6">
+                        <div v-if="gameState.lastRevealResult" class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-400/90 p-6 sm:p-8 rounded-3xl text-center shadow-2xl space-y-4">
+                            <div class="text-base sm:text-xl font-black text-amber-400 uppercase tracking-widest flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-trophy text-xl"></i> 本題攻防戰報結算
                             </div>
-                            <div class="grid grid-cols-3 gap-4 py-2 items-center">
-                                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 shadow-inner">
-                                    <span class="text-xs text-slate-400 block mb-1 font-bold">進攻方答對桌數</span>
-                                    <span class="text-2xl font-oswald font-black text-emerald-400">{{ gameState.lastRevealResult.correctCount }} / 10 桌</span>
+                            <div class="grid grid-cols-3 gap-6 py-2 items-center">
+                                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                                    <span class="text-sm sm:text-base text-slate-400 block mb-1 font-bold">進攻方答對桌數</span>
+                                    <span class="text-3xl sm:text-5xl font-oswald font-black text-emerald-400">{{ gameState.lastRevealResult.correctCount }} / 10 桌</span>
                                 </div>
-                                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 shadow-inner">
-                                    <span class="text-xs text-slate-400 block mb-1 font-bold">道具卡發動狀態</span>
-                                    <span class="text-sm sm:text-base font-black block mt-1" :class="gameState.lastRevealResult.statusType === 'success' ? 'text-amber-400' : (gameState.lastRevealResult.statusType === 'fail' ? 'text-red-400' : 'text-slate-300')">
+                                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                                    <span class="text-sm sm:text-base text-slate-400 block mb-1 font-bold">道具卡發動狀態</span>
+                                    <span class="text-lg sm:text-2xl font-black block mt-1" :class="gameState.lastRevealResult.statusType === 'success' ? 'text-amber-400' : (gameState.lastRevealResult.statusType === 'fail' ? 'text-red-400' : 'text-slate-300')">
                                         {{ gameState.lastRevealResult.statusText }}
                                     </span>
                                 </div>
-                                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 shadow-inner">
-                                    <span class="text-xs text-slate-400 block mb-1 font-bold">本題得分變動</span>
-                                    <span class="text-2xl font-oswald font-black text-amber-400">+{{ gameState.lastRevealResult.addedPoints }} 分</span>
-                                    <span v-if="gameState.lastRevealResult.enemyDeduction > 0" class="text-xs text-red-400 block font-bold mt-0.5">(敵隊 -3 分)</span>
+                                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                                    <span class="text-sm sm:text-base text-slate-400 block mb-1 font-bold">本題得分變動</span>
+                                    <span class="text-3xl sm:text-5xl font-oswald font-black text-amber-400">+{{ gameState.lastRevealResult.addedPoints }} 分</span>
+                                    <span v-if="gameState.lastRevealResult.enemyDeduction > 0" class="text-sm text-red-400 block font-bold mt-1">(敵隊 -3 分)</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-emerald-950/40 border border-emerald-500/50 p-4 rounded-2xl text-left shadow-lg">
-                            <div class="text-emerald-400 font-bold text-sm mb-1 flex items-center gap-1.5">
+                        <div class="bg-emerald-950/40 border border-emerald-500/50 p-5 rounded-2xl text-left shadow-lg">
+                            <div class="text-emerald-400 font-bold text-lg sm:text-2xl mb-2 flex items-center gap-2">
                                 <i class="fa-solid fa-circle-check"></i> 正解：{{ currentQuestion.answer }}
                             </div>
-                            <p class="text-slate-200 text-sm leading-relaxed">{{ currentQuestion.explanation }}</p>
+                            <p class="text-slate-100 text-base sm:text-xl leading-relaxed font-medium">{{ currentQuestion.explanation }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- PHASE: GAME OVER -->
-                <div v-else-if="gameState.phase === 'GAME_OVER'" class="w-full text-center space-y-6 py-10">
-                    <div class="text-5xl font-black font-oswald text-amber-400 animate-bounce tracking-widest">
-                        <i class="fa-solid fa-trophy mb-4 text-7xl"></i><br>
+                <div v-else-if="gameState.phase === 'GAME_OVER'" class="w-full text-center space-y-8 py-10">
+                    <div class="text-6xl sm:text-8xl font-black font-oswald text-amber-400 animate-bounce tracking-widest">
+                        <i class="fa-solid fa-trophy mb-6 text-8xl sm:text-9xl"></i><br>
                         FINAL RESULT
                     </div>
-                    <h2 class="text-4xl sm:text-5xl font-black text-white mt-4">
-                        <span v-if="gameState.scores.red > gameState.scores.blue" class="text-red-400 drop-shadow-[0_0_20px_rgba(239,68,68,0.6)]">🏆 紅隊 RED TEAM 獲得總冠軍！</span>
-                        <span v-else-if="gameState.scores.blue > gameState.scores.red" class="text-blue-400 drop-shadow-[0_0_20px_rgba(59,130,246,0.6)]">🏆 藍隊 BLUE TEAM 獲得總冠軍！</span>
+                    <h2 class="text-5xl sm:text-7xl font-black text-white mt-6">
+                        <span v-if="gameState.scores.red > gameState.scores.blue" class="text-red-400 drop-shadow-[0_0_30px_rgba(239,68,68,0.7)]">🏆 紅隊 RED TEAM 獲得總冠軍！</span>
+                        <span v-else-if="gameState.scores.blue > gameState.scores.red" class="text-blue-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.7)]">🏆 藍隊 BLUE TEAM 獲得總冠軍！</span>
                         <span v-else class="text-emerald-400">🤝 雙方平手 TIE GAME！</span>
                     </h2>
                     
-                    <div class="flex justify-center gap-12 mt-8">
-                        <div class="text-center p-6 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[220px] shadow-2xl"
-                             :class="{ 'ring-4 ring-red-500 shadow-[0_0_40px_rgba(239,68,68,0.5)] border-red-500': gameState.scores.red > gameState.scores.blue }">
-                            <div class="text-red-400 font-bold text-xl mb-2">紅隊 RED</div>
-                            <div class="text-6xl font-oswald font-black text-white score-glow-red">{{ gameState.scores.red }}</div>
+                    <div class="flex justify-center gap-16 mt-10">
+                        <div class="text-center p-8 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[280px] shadow-2xl"
+                             :class="{ 'ring-4 ring-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.6)] border-blue-500': gameState.scores.blue > gameState.scores.red }">
+                            <div class="text-blue-400 font-bold text-2xl sm:text-3xl mb-3">藍隊 BLUE</div>
+                            <div class="text-7xl sm:text-9xl font-oswald font-black text-white score-glow-blue">{{ gameState.scores.blue }}</div>
                         </div>
-                        <div class="text-center p-6 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[220px] shadow-2xl"
-                             :class="{ 'ring-4 ring-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.5)] border-blue-500': gameState.scores.blue > gameState.scores.red }">
-                            <div class="text-blue-400 font-bold text-xl mb-2">藍隊 BLUE</div>
-                            <div class="text-6xl font-oswald font-black text-white score-glow-blue">{{ gameState.scores.blue }}</div>
+                        <div class="text-center p-8 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[280px] shadow-2xl"
+                             :class="{ 'ring-4 ring-red-500 shadow-[0_0_50px_rgba(239,68,68,0.6)] border-red-500': gameState.scores.red > gameState.scores.blue }">
+                            <div class="text-red-400 font-bold text-2xl sm:text-3xl mb-3">紅隊 RED</div>
+                            <div class="text-7xl sm:text-9xl font-oswald font-black text-white score-glow-red">{{ gameState.scores.red }}</div>
                         </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Bottom Ticker Bar -->
-            <div class="bg-slate-950/90 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between text-xs text-slate-400 shadow-xl backdrop-blur-sm">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span class="font-bold text-slate-200">賽況播報：</span>
-                    <span class="text-slate-300 font-medium">{{ systemMessage }}</span>
+            <!-- Bottom Ticker Bar (極大化視域) -->
+            <div class="bg-slate-950/90 border border-slate-800 rounded-2xl px-6 py-4 flex items-center justify-between text-base sm:text-xl text-slate-300 shadow-2xl backdrop-blur-sm">
+                <div class="flex items-center gap-3">
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span class="font-extrabold text-white">賽況播報：</span>
+                    <span class="text-amber-300 font-bold text-lg sm:text-2xl">{{ systemMessage }}</span>
                 </div>
-                <div class="font-oswald text-slate-500 hidden sm:block tracking-wider">JUMBOTRON DISPLAY VIEW</div>
+                <div class="font-oswald text-slate-500 hidden sm:block tracking-wider font-bold">JUMBOTRON DISPLAY VIEW</div>
             </div>
 
         </section>
 
 
-        <!-- PAGE 2: 🎛️ 主持人控台獨立頁面 (#admin) -->
+        <!-- PAGE 2: 🎛️ 主持人控台獨立頁面 (#admin - 字體整體放大與邊界展延) -->
         <section v-else-if="currentRoute === 'admin'" class="flex-1 flex flex-col space-y-6">
             
             <div v-if="!isAdminAuthenticated" class="flex-1 flex items-center justify-center py-12">
@@ -574,17 +585,17 @@
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold text-white">主持人控台安全驗證</h2>
-                        <p class="text-xs text-slate-400 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
+                        <p class="text-sm text-slate-400 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
                     </div>
                     <form @submit.prevent="verifyAdminPassword" class="space-y-4">
                         <div>
                             <input v-model="adminPasswordInput" type="password" placeholder="請輸入控台密碼" 
                                    class="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-center text-lg tracking-wider focus:outline-none transition shadow-inner">
-                            <p v-if="adminPasswordError" class="text-xs text-red-400 mt-2 flex items-center justify-center gap-1 font-bold">
+                            <p v-if="adminPasswordError" class="text-sm text-red-400 mt-2 flex items-center justify-center gap-1 font-bold">
                                 <i class="fa-solid fa-triangle-exclamation"></i> 密碼錯誤！請重新輸入。
                             </p>
                         </div>
-                        <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-base">
                             <i class="fa-solid fa-key"></i> 解鎖進入控台
                         </button>
                     </form>
@@ -592,37 +603,37 @@
             </div>
 
             <div v-else class="space-y-6">
-                <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
                     <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
                         <div>
                             <div class="flex items-center gap-3">
-                                <h2 class="text-2xl font-black text-amber-400 flex items-center gap-2">
+                                <h2 class="text-2xl sm:text-3xl font-black text-amber-400 flex items-center gap-2">
                                     <i class="fa-solid fa-sliders"></i> 主持人控台 (Host Control)
                                 </h2>
-                                <button @click="lockAdmin" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                                <button @click="lockAdmin" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1 font-bold">
                                     <i class="fa-solid fa-lock"></i> 鎖定控台
                                 </button>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">控制流程將即時推播至舞台大螢幕與手機端</p>
+                            <p class="text-sm text-slate-300 mt-1.5 font-medium">控制流程將即時推播至舞台大螢幕與手機端</p>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            <button @click="setPhase('LOBBY')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-xl text-slate-200 border border-slate-700 font-bold transition shadow">
+                            <button @click="setPhase('LOBBY')" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm rounded-xl text-slate-100 border border-slate-700 font-extrabold transition shadow">
                                 1. 進入大廳
                             </button>
-                            <button @click="setPhase('CATEGORY_VOTE')" class="px-3 py-2 bg-amber-900/60 hover:bg-amber-800 text-xs rounded-xl text-amber-200 border border-amber-700 font-bold transition shadow">
+                            <button @click="setPhase('CATEGORY_VOTE')" class="px-3.5 py-2.5 bg-amber-900/60 hover:bg-amber-800 text-sm rounded-xl text-amber-200 border border-amber-700 font-extrabold transition shadow">
                                 2. 類別投票
                             </button>
-                            <button @click="confirmCategory()" class="px-3 py-2 bg-purple-900/60 hover:bg-purple-800 text-xs rounded-xl text-purple-200 border border-purple-700 font-bold transition shadow">
+                            <button @click="confirmCategory()" class="px-3.5 py-2.5 bg-purple-900/60 hover:bg-purple-800 text-sm rounded-xl text-purple-200 border border-purple-700 font-extrabold transition shadow">
                                 3. 揭曉投票與卡片階段
                             </button>
-                            <button @click="startQuestionPhase()" class="px-3 py-2 bg-emerald-900/60 hover:bg-emerald-800 text-xs rounded-xl text-emerald-200 border border-emerald-700 font-bold transition shadow">
+                            <button @click="startQuestionPhase()" class="px-3.5 py-2.5 bg-emerald-900/60 hover:bg-emerald-800 text-sm rounded-xl text-emerald-200 border border-emerald-700 font-extrabold transition shadow">
                                 4. 出題與倒數
                             </button>
-                            <button @click="revealAnswer()" class="px-3 py-2 bg-blue-900/60 hover:bg-blue-800 text-xs rounded-xl text-blue-200 border border-blue-700 font-bold transition shadow">
+                            <button @click="revealAnswer()" class="px-3.5 py-2.5 bg-blue-900/60 hover:bg-blue-800 text-sm rounded-xl text-blue-200 border border-blue-700 font-extrabold transition shadow">
                                 5. 揭曉正解
                             </button>
-                            <button @click="setPhase('GAME_OVER')" class="px-3 py-2 bg-red-900/60 hover:bg-red-800 text-xs rounded-xl text-red-200 border border-red-700 font-bold transition shadow">
+                            <button @click="setPhase('GAME_OVER')" class="px-3.5 py-2.5 bg-red-900/60 hover:bg-red-800 text-sm rounded-xl text-red-200 border border-red-700 font-extrabold transition shadow">
                                 6. 揭曉勝負
                             </button>
                         </div>
@@ -630,100 +641,100 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Left Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 flex items-center justify-between">
-                                <span><i class="fa-solid fa-play text-amber-400 mr-1.5"></i> 核心流程控制器</span>
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-play text-amber-400 mr-2"></i> 核心流程控制器</span>
                             </h3>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1.5">當前攻擊隊伍 (Active Team)</label>
-                                <div class="grid grid-cols-2 gap-2">
+                                <label class="text-sm text-slate-300 block mb-2 font-bold">當前攻擊隊伍 (Active Team)</label>
+                                <div class="grid grid-cols-2 gap-2.5">
                                     <button @click="setActiveTeam('red')" 
                                             :class="gameState.activeTeam === 'red' ? 'bg-red-600 text-white font-bold ring-2 ring-red-400' : 'bg-slate-800 text-gray-400'"
-                                            class="py-2 text-xs rounded-xl transition">
+                                            class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         紅隊 (1~10桌)
                                     </button>
                                     <button @click="setActiveTeam('blue')" 
                                             :class="gameState.activeTeam === 'blue' ? 'bg-blue-600 text-white font-bold ring-2 ring-blue-400' : 'bg-slate-800 text-gray-400'"
-                                            class="py-2 text-xs rounded-xl transition">
+                                            class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         藍隊 (11~20桌)
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1.5">目前選定類別與題目</label>
-                                <div class="bg-slate-900 border border-slate-700 text-xs rounded-xl p-3 text-white space-y-1">
-                                    <div>類別：<span class="text-amber-400 font-bold">{{ gameState.selectedCategory || '尚未揭曉' }}</span></div>
-                                    <div v-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="text-slate-300 truncate">
+                                <label class="text-sm text-slate-300 block mb-2 font-bold">目前選定類別與題目</label>
+                                <div class="bg-slate-900 border border-slate-700 text-sm rounded-xl p-3.5 text-white space-y-1.5 font-medium">
+                                    <div>類別：<span class="text-amber-400 font-bold text-base">{{ gameState.selectedCategory || '尚未揭曉' }}</span></div>
+                                    <div v-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="text-slate-200 truncate">
                                         題目：{{ currentQuestion.question }}
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-amber-400 font-bold block mb-1.5 flex items-center justify-between">
-                                    <span><i class="fa-solid fa-stopwatch mr-1"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : (currentQuestion.id === 5 ? '40 秒答題計時器' : '30 秒答題計時器') }}</span>
+                                <label class="text-sm text-amber-400 font-bold block mb-2 flex items-center justify-between">
+                                    <span><i class="fa-solid fa-stopwatch mr-1.5"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : (currentQuestion.id === 5 ? '40 秒答題計時器' : '30 秒答題計時器') }}</span>
                                 </label>
-                                <div class="flex gap-2">
-                                    <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-md">
+                                <div class="flex gap-2.5">
+                                    <button @click="toggleTimer()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm sm:text-base rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
                                         <i class="fa-solid" :class="gameState.isTimerRunning ? 'fa-pause' : 'fa-play'"></i>
                                         {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + Math.max(0, gameState.timer) + 's)' }}
                                     </button>
-                                    <button @click="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl">
+                                    <button @click="resetTimer()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl">
                                         重置
                                     </button>
                                 </div>
                             </div>
                             <div class="pt-2 border-t border-slate-800">
-                                <button @click="simulateTableAnswers()" class="w-full py-2 bg-purple-900/50 hover:bg-purple-800 text-purple-200 border border-purple-700 text-xs rounded-xl font-bold transition">
-                                    <i class="fa-solid fa-robot mr-1.5"></i> 一鍵模擬當前進攻方答題
+                                <button @click="simulateTableAnswers()" class="w-full py-2.5 bg-purple-900/50 hover:bg-purple-800 text-purple-200 border border-purple-700 text-sm rounded-xl font-bold transition">
+                                    <i class="fa-solid fa-robot mr-2"></i> 一鍵模擬當前進攻方答題
                                 </button>
                             </div>
                         </div>
 
                         <!-- Middle Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 flex justify-between items-center">
-                                <span><i class="fa-solid fa-wand-magic-sparkles text-purple-400 mr-1.5"></i> 戰術卡片小組投票</span>
-                                <span class="text-xs px-2 py-0.5 rounded-md font-bold" :class="gameState.activeTeam === 'red' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'">
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2 flex justify-between items-center">
+                                <span><i class="fa-solid fa-wand-magic-sparkles text-purple-400 mr-2"></i> 戰術卡片小組投票</span>
+                                <span class="text-xs sm:text-sm px-2.5 py-0.5 rounded-md font-bold" :class="gameState.activeTeam === 'red' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'">
                                     {{ gameState.activeTeam === 'red' ? '紅隊進攻' : '藍隊進攻' }}
                                 </span>
                             </h3>
 
-                            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs space-y-1.5">
-                                <div class="text-[10px] text-slate-400 font-bold mb-1">小組投票即時結果：</div>
-                                <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="flex justify-between items-center text-slate-300">
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-sm space-y-2">
+                                <div class="text-xs text-slate-300 font-bold mb-1">小組投票即時結果：</div>
+                                <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="flex justify-between items-center text-slate-200 font-medium">
                                     <span>{{ card.name.split(' ')[0] }}</span>
-                                    <span class="font-oswald font-bold text-amber-400">{{ gameState.cardVotes[card.id] || 0 }} 票</span>
+                                    <span class="font-oswald font-bold text-amber-400 text-base">{{ gameState.cardVotes[card.id] || 0 }} 票</span>
                                 </div>
-                                <div class="flex justify-between items-center text-slate-400 border-t border-slate-800/80 pt-1 mt-1">
+                                <div class="flex justify-between items-center text-slate-300 border-t border-slate-800/80 pt-1.5 mt-1.5 font-medium">
                                     <span>不發動卡片</span>
-                                    <span class="font-oswald font-bold text-slate-400">{{ gameState.cardVotes['none'] || 0 }} 票</span>
+                                    <span class="font-oswald font-bold text-slate-400 text-base">{{ gameState.cardVotes['none'] || 0 }} 票</span>
                                 </div>
                             </div>
 
-                            <button @click="confirmCardVote(true)" class="w-full py-2 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-xs rounded-xl font-bold transition flex items-center justify-center gap-1.5">
+                            <button @click="confirmCardVote(true)" class="w-full py-2.5 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-sm rounded-xl font-extrabold transition flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check-to-slot"></i> 結算卡片投票 (保護優先制)
                             </button>
 
                             <div class="pt-2 border-t border-slate-800">
-                                <div class="text-[10px] text-slate-400 mb-1.5 font-bold">手動覆蓋設定 (備用)：</div>
-                                <div v-if="gameState.activeTeam === 'red'" class="space-y-1">
-                                    <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded-lg border border-slate-800 text-xs">
-                                        <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
+                                <div class="text-xs text-slate-300 mb-2 font-bold">手動覆蓋設定 (備用)：</div>
+                                <div v-if="gameState.activeTeam === 'red'" class="space-y-1.5">
+                                    <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
+                                        <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('red', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.red || gameState.activeCards.red.id !== card.id)"
                                                 :class="(gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-red-600 text-white')"
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold">
+                                                class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
                                         </button>
                                     </div>
                                 </div>
-                                <div v-else class="space-y-1">
-                                    <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded-lg border border-slate-800 text-xs">
-                                        <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
+                                <div v-else class="space-y-1.5">
+                                    <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
+                                        <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('blue', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.blue || gameState.activeCards.blue.id !== card.id)"
                                                 :class="(gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white')"
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold">
+                                                class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
                                         </button>
                                     </div>
@@ -733,48 +744,48 @@
                             <button @click="cancelCard(gameState.activeTeam)" 
                                     :disabled="!gameState.activeCards[gameState.activeTeam]"
                                     :class="gameState.activeCards[gameState.activeTeam] ? 'bg-amber-900/60 hover:bg-amber-800 text-amber-200 border-amber-600' : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'"
-                                    class="w-full py-1.5 text-xs rounded-xl font-bold transition flex items-center justify-center gap-1.5 border">
+                                    class="w-full py-2 text-xs sm:text-sm rounded-xl font-bold transition flex items-center justify-center gap-1.5 border">
                                 <i class="fa-solid fa-rotate-left"></i> 撤銷卡片 (復原選錯)
                             </button>
                         </div>
 
                         <!-- Right Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2">
-                                <i class="fa-solid fa-trophy text-amber-400 mr-1.5"></i> 手動比分微調
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2">
+                                <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> 手動比分微調
                             </h3>
-                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs text-red-400 font-bold">紅隊總分</span>
-                                    <span class="text-2xl font-oswald font-black text-red-300">{{ gameState.scores.red }}</span>
+                                    <span class="text-sm text-red-400 font-bold">紅隊總分</span>
+                                    <span class="text-3xl font-oswald font-black text-red-300">{{ gameState.scores.red }}</span>
                                 </div>
-                                <div class="flex gap-1 justify-end flex-wrap">
-                                    <button @click="adjustScore('red', -10)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-10</button>
-                                    <button @click="adjustScore('red', -5)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-5</button>
-                                    <button @click="adjustScore('red', -1)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-1</button>
-                                    <button @click="adjustScore('red', 1)" class="px-2 py-1 bg-red-800 text-white rounded-lg font-bold hover:bg-red-700 text-xs">+1</button>
-                                    <button @click="adjustScore('red', 5)" class="px-2 py-1 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 text-xs">+5</button>
-                                    <button @click="adjustScore('red', 10)" class="px-2 py-1 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 text-xs">+10</button>
+                                <div class="flex gap-1.5 justify-end flex-wrap">
+                                    <button @click="adjustScore('red', -10)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-10</button>
+                                    <button @click="adjustScore('red', -5)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-5</button>
+                                    <button @click="adjustScore('red', -1)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-1</button>
+                                    <button @click="adjustScore('red', 1)" class="px-2.5 py-1 bg-red-800 text-white rounded-lg font-bold hover:bg-red-700 text-xs sm:text-sm">+1</button>
+                                    <button @click="adjustScore('red', 5)" class="px-2.5 py-1 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 text-xs sm:text-sm">+5</button>
+                                    <button @click="adjustScore('red', 10)" class="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 text-xs sm:text-sm">+10</button>
                                 </div>
                             </div>
 
-                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs text-blue-400 font-bold">藍隊總分</span>
-                                    <span class="text-2xl font-oswald font-black text-blue-300">{{ gameState.scores.blue }}</span>
+                                    <span class="text-sm text-blue-400 font-bold">藍隊總分</span>
+                                    <span class="text-3xl font-oswald font-black text-blue-300">{{ gameState.scores.blue }}</span>
                                 </div>
-                                <div class="flex gap-1 justify-end flex-wrap">
-                                    <button @click="adjustScore('blue', -10)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-10</button>
-                                    <button @click="adjustScore('blue', -5)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-5</button>
-                                    <button @click="adjustScore('blue', -1)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-1</button>
-                                    <button @click="adjustScore('blue', 1)" class="px-2 py-1 bg-blue-800 text-white rounded-lg font-bold hover:bg-blue-700 text-xs">+1</button>
-                                    <button @click="adjustScore('blue', 5)" class="px-2 py-1 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 text-xs">+5</button>
-                                    <button @click="adjustScore('blue', 10)" class="px-2 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500 text-xs">+10</button>
+                                <div class="flex gap-1.5 justify-end flex-wrap">
+                                    <button @click="adjustScore('blue', -10)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-10</button>
+                                    <button @click="adjustScore('blue', -5)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-5</button>
+                                    <button @click="adjustScore('blue', -1)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-1</button>
+                                    <button @click="adjustScore('blue', 1)" class="px-2.5 py-1 bg-blue-800 text-white rounded-lg font-bold hover:bg-blue-700 text-xs sm:text-sm">+1</button>
+                                    <button @click="adjustScore('blue', 5)" class="px-2.5 py-1 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 text-xs sm:text-sm">+5</button>
+                                    <button @click="adjustScore('blue', 10)" class="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500 text-xs sm:text-sm">+10</button>
                                 </div>
                             </div>
                             <div class="pt-2 border-t border-slate-800">
-                                <button @click="resetEntireGame()" class="w-full py-2 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs rounded-xl font-bold">
-                                    <i class="fa-solid fa-rotate-left mr-1"></i> 完全重置遊戲紀錄
+                                <button @click="resetEntireGame()" class="w-full py-2.5 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs sm:text-sm rounded-xl font-bold">
+                                    <i class="fa-solid fa-rotate-left mr-1.5"></i> 完全重置遊戲紀錄
                                 </button>
                             </div>
                         </div>
@@ -782,27 +793,27 @@
                 </div>
 
                 <!-- 20 桌連線狀態與控台一鍵解鎖管理 -->
-                <div class="mt-6 pt-6 border-t border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-300 flex justify-between items-center">
-                        <span><i class="fa-solid fa-users-gear mr-1.5 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
-                        <span class="text-xs text-slate-400 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-sm">{{ gameState.connectedTables.length }}</strong> / 20 桌</span>
+                <div class="mt-6 pt-6 border-t border-slate-800 space-y-4">
+                    <h3 class="text-base font-bold text-slate-200 flex justify-between items-center">
+                        <span><i class="fa-solid fa-users-gear mr-2 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
+                        <span class="text-sm text-slate-300 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-base">{{ connectedTablesCount }}</strong> / 20 桌</span>
                     </h3>
                     
-                    <div class="grid grid-cols-4 sm:grid-cols-10 gap-2">
+                    <div class="grid grid-cols-4 sm:grid-cols-10 gap-2.5">
                         <div v-for="t in 20" :key="t" 
-                             class="bg-slate-950 p-2 rounded-xl border text-center transition flex flex-col justify-between"
-                             :class="gameState.connectedTables.includes(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
-                            <div class="font-oswald font-bold text-xs" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
+                             class="bg-slate-950 p-2.5 rounded-xl border text-center transition flex flex-col justify-between"
+                             :class="isTableOccupied(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
+                            <div class="font-oswald font-bold text-sm" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
                                 #{{ t < 10 ? '0'+t : t }}
                             </div>
-                            <div class="mt-1.5">
-                                <button v-if="gameState.connectedTables.includes(t)" 
+                            <div class="mt-2">
+                                <button v-if="isTableOccupied(t)" 
                                         @click="unlockSpecificTable(t)"
                                         title="點擊此按鈕強制解鎖此桌，讓玩家重新選桌"
-                                        class="w-full text-[10px] bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                                        class="w-full text-xs bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
                                     <i class="fa-solid fa-lock"></i> 解鎖
                                 </button>
-                                <span v-else class="text-[10px] text-slate-600 block py-1 font-mono">未鎖定</span>
+                                <span v-else class="text-xs text-slate-600 block py-1 font-mono">未鎖定</span>
                             </div>
                         </div>
                     </div>
@@ -810,16 +821,16 @@
 
                 <!-- Live Submissions Table -->
                 <div class="mt-6 pt-6 border-t border-slate-800">
-                    <h3 class="text-sm font-bold text-slate-300 mb-3 flex justify-between items-center">
-                        <span><i class="fa-solid fa-list-numeric mr-1.5 text-amber-400"></i> 進攻方即時作答狀況 (Firebase 同步)</span>
-                        <span class="text-xs text-slate-400 font-normal">綠色 = 已提交答案</span>
+                    <h3 class="text-base font-bold text-slate-200 mb-3 flex justify-between items-center">
+                        <span><i class="fa-solid fa-list-numeric mr-2 text-amber-400"></i> 進攻方即時作答狀況 (Firebase 同步)</span>
+                        <span class="text-xs sm:text-sm text-slate-400 font-normal">綠色 = 已提交答案</span>
                     </h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2">
-                        <div v-for="t in activeTeamTables" :key="t" class="bg-slate-950 p-2 rounded-xl border border-slate-800 text-center text-xs">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2.5">
+                        <div v-for="t in activeTeamTables" :key="t" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center text-xs sm:text-sm">
                             <div class="font-oswald font-bold" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
                                 #{{ t < 10 ? '0'+t : t }}桌
                             </div>
-                            <div class="mt-1 font-bold text-sm" :class="gameState.answers['table_'+t] ? 'text-emerald-400' : 'text-slate-600'">
+                            <div class="mt-1 font-bold text-base" :class="gameState.answers['table_'+t] ? 'text-emerald-400' : 'text-slate-600'">
                                 {{ gameState.answers['table_'+t] || '-' }}
                             </div>
                         </div>
@@ -843,8 +854,8 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <select v-model="selectedMobileTable" :disabled="isTableLocked" class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-mlbBlue disabled:opacity-60 disabled:cursor-not-allowed font-bold">
-                        <option v-for="t in 20" :key="t" :value="t" :disabled="!isTableLocked && gameState.connectedTables.includes(t)">
-                            #{{ t < 10 ? '0' + t : t }} 桌 ({{ t <= 10 ? '紅隊代表' : '藍隊代表' }}) {{ gameState.connectedTables.includes(t) && !isTableLocked ? ' - [已被佔用]' : '' }}
+                        <option v-for="t in 20" :key="t" :value="t" :disabled="!isTableLocked && isTableOccupied(t)">
+                            #{{ t < 10 ? '0' + t : t }} 桌 ({{ t <= 10 ? '紅隊代表' : '藍隊代表' }}) {{ isTableOccupied(t) && !isTableLocked ? ' - [已被佔用]' : '' }}
                         </option>
                     </select>
                     <button @click="lockTable()" :disabled="isTableLocked" 
@@ -873,9 +884,6 @@
                                 {{ selectedMobileTable <= 10 ? '紅隊 RED' : '藍隊 BLUE' }}
                             </span>
                         </div>
-                        <span class="text-xs bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-md text-amber-400 font-oswald font-bold">
-                            <i class="fa-solid fa-baseball mr-1"></i>VIP PASS
-                        </span>
                     </div>
                 </div>
 
@@ -1142,6 +1150,13 @@
     const db = firebase.database();
     const gameStateRef = db.ref('mlb_live_game_state');
 
+    // 生成手機端唯一 Device ID (存於 localStorage)
+    let deviceId = localStorage.getItem('mlb_device_id');
+    if (!deviceId) {
+        deviceId = 'dev_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        localStorage.setItem('mlb_device_id', deviceId);
+    }
+
     // 預設標準卡片資訊
     const defaultRedCards = [
         { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
@@ -1282,6 +1297,7 @@
                 phase: 'LOBBY',
                 activeTeam: 'red',
                 scores: { red: 0, blue: 0 },
+                occupiedTables: {}, 
                 connectedTables: [], 
                 usedQuestionIds: [], 
                 currentQuestionIndex: 0,
@@ -1305,7 +1321,16 @@
             const systemMessage = ref('連線至 Firebase 雲端中...');
 
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
-            const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
+            const submittedTablesCount = computed(() => Object.keys(gameState.answers || {}).length);
+
+            // 計算已連線鎖定桌數
+            const connectedTablesCount = computed(() => Object.keys(gameState.occupiedTables || {}).length);
+
+            // 判斷某桌號是否已被佔用
+            const isTableOccupied = (tableNum) => {
+                const tableKey = 'table_' + tableNum;
+                return !!(gameState.occupiedTables && gameState.occupiedTables[tableKey]);
+            };
 
             // 格式化顯示時間
             const displayTimerFormatted = computed(() => {
@@ -1323,10 +1348,11 @@
 
             // 計算實際局數
             const currentRoundNumber = computed(() => {
+                const used = gameState.usedQuestionIds || [];
                 if (gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL') {
-                    return gameState.usedQuestionIds.length;
+                    return used.length;
                 }
-                return Math.min(gameState.usedQuestionIds.length + 1, questions.value.length);
+                return Math.min(used.length + 1, questions.value.length);
             });
 
             const activeTeamTables = computed(() => {
@@ -1335,8 +1361,8 @@
 
             const categoryRemaining = computed(() => {
                 const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合時事': 3 };
-                if (!gameState.usedQuestionIds) return counts;
-                gameState.usedQuestionIds.forEach(id => {
+                const used = gameState.usedQuestionIds || [];
+                used.forEach(id => {
                     const q = questions.value.find(q => q.id === id);
                     if (q && counts[q.category] !== undefined && counts[q.category] > 0) {
                         counts[q.category]--;
@@ -1358,50 +1384,80 @@
                 mobileSelectedAnswer.value = null;
             });
 
+            // 監聽自己的桌號鎖定狀態：若主持人解鎖或遭釋放，自動解鎖手機 UI
+            watch(() => gameState.occupiedTables, (newOccupied) => {
+                if (isTableLocked.value) {
+                    const tableKey = 'table_' + selectedMobileTable.value;
+                    const occupant = newOccupied ? newOccupied[tableKey] : null;
+                    if (!occupant || occupant.deviceId !== deviceId) {
+                        isTableLocked.value = false;
+                        localStorage.removeItem('my_locked_table');
+                    }
+                }
+            }, { deep: true });
+
             const updateRoute = () => {
                 const hash = window.location.hash.replace('#', '');
                 currentRoute.value = hash;
+            };
+
+            // 全安全 Vue 3 響應式狀態同步助手 (防止 undefined/null 拋錯凍結 Vue)
+            const updateGameState = (newData) => {
+                if (!newData) return;
+                const defaults = {
+                    phase: 'LOBBY',
+                    activeTeam: 'red',
+                    scores: { red: 0, blue: 0 },
+                    occupiedTables: {},
+                    connectedTables: [],
+                    usedQuestionIds: [],
+                    currentQuestionIndex: 0,
+                    selectedCategory: null,
+                    isTieVote: false,
+                    isScored: false,
+                    showCardNotice: false,
+                    lastRevealResult: null,
+                    timer: 30,
+                    isTimerRunning: false,
+                    activeCards: { red: null, blue: null },
+                    categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 },
+                    cardVotes: { none: 0 },
+                    tableCardVotes: {},
+                    tableVotes: {},
+                    answers: {},
+                    redCards: defaultRedCards,
+                    blueCards: defaultBlueCards
+                };
+
+                const merged = { ...defaults, ...newData };
+                if (!merged.scores) merged.scores = { red: 0, blue: 0 };
+                if (!merged.occupiedTables) merged.occupiedTables = {};
+                if (!merged.categoryVotes) merged.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
+                if (!merged.cardVotes) merged.cardVotes = { none: 0 };
+                if (!merged.activeCards) merged.activeCards = { red: null, blue: null };
+                if (!merged.answers) merged.answers = {};
+                if (!merged.tableVotes) merged.tableVotes = {};
+                if (!merged.tableCardVotes) merged.tableCardVotes = {};
+                if (!merged.usedQuestionIds) merged.usedQuestionIds = [];
+                if (!merged.redCards) merged.redCards = JSON.parse(JSON.stringify(defaultRedCards));
+                if (!merged.blueCards) merged.blueCards = JSON.parse(JSON.stringify(defaultBlueCards));
+
+                // 校正 connectedTables 陣列
+                merged.connectedTables = Object.keys(merged.occupiedTables).map(k => parseInt(k.replace('table_', ''))).filter(n => !isNaN(n));
+
+                delete merged.categoryVotes['綜合題'];
+
+                // 覆蓋寫入 reactivity 節點
+                for (const key in merged) {
+                    gameState[key] = merged[key];
+                }
             };
 
             const initFirebaseListener = () => {
                 gameStateRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        if (!data.connectedTables) data.connectedTables = [];
-                        if (!data.usedQuestionIds) data.usedQuestionIds = [];
-                        if (!data.answers) data.answers = {};
-                        if (!data.tableVotes) data.tableVotes = {};
-                        if (!data.tableCardVotes) data.tableCardVotes = {};
-                        if (!data.cardVotes) data.cardVotes = { none: 0 };
-                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
-                        if (!data.activeCards) data.activeCards = { red: null, blue: null };
-                        if (data.isScored === undefined) data.isScored = false;
-                        if (data.showCardNotice === undefined) data.showCardNotice = false;
-                        if (!data.lastRevealResult) data.lastRevealResult = null;
-
-                        if (data.categoryVotes) {
-                            delete data.categoryVotes['綜合題'];
-                        }
-
-                        if (data.redCards) {
-                            data.redCards.forEach(c => {
-                                const def = defaultRedCards.find(d => d.id === c.id);
-                                if (def) { c.name = def.name; c.desc = def.desc; }
-                            });
-                        }
-                        if (data.blueCards) {
-                            data.blueCards.forEach(c => {
-                                const def = defaultBlueCards.find(d => d.id === c.id);
-                                if (def) { c.name = def.name; c.desc = def.desc; }
-                            });
-                        }
-
-                        Object.assign(gameState, data);
-
-                        if (isTableLocked.value && !gameState.connectedTables.includes(selectedMobileTable.value)) {
-                            isTableLocked.value = false;
-                            localStorage.removeItem('my_locked_table');
-                        }
+                        updateGameState(data);
                     }
                 });
             };
@@ -1415,14 +1471,15 @@
                 window.open(`${window.location.pathname}#${route}`, '_blank');
             };
 
-            // 玩家選桌鎖定與防呆
-            const lockTable = () => {
+            // 玩家選桌原子事務（Transaction）鎖定防衝突與防搶桌
+            const lockTable = async () => {
                 const tableNum = selectedMobileTable.value;
+                const tableKey = 'table_' + tableNum;
                 const tableFormatted = `#${tableNum < 10 ? '0' + tableNum : tableNum}`;
                 const teamName = tableNum <= 10 ? '紅隊' : '藍隊';
 
-                if (gameState.connectedTables.includes(tableNum)) {
-                    alert(`錯誤！桌號 ${tableFormatted} 已被其他裝置登入鎖定。\n(若為誤觸，請通知工作人員為您解鎖)`);
+                if (isTableOccupied(tableNum) && (!gameState.occupiedTables[tableKey] || gameState.occupiedTables[tableKey].deviceId !== deviceId)) {
+                    alert(`錯誤！桌號 ${tableFormatted} 已被現場其他夥伴鎖定。\n(若為誤觸，請通知工作人員為您解鎖)`);
                     return;
                 }
 
@@ -1430,14 +1487,35 @@
                     return;
                 }
 
-                isTableLocked.value = true;
-                const newConnected = [...gameState.connectedTables, tableNum];
-                localStorage.setItem('my_locked_table', tableNum); 
-                
-                const updates = {};
-                updates['mlb_live_game_state/connectedTables'] = newConnected;
-                updates['mlb_live_game_state/systemMessage'] = `${tableFormatted} 桌已成功鎖定代表身份！`;
-                db.ref().update(updates);
+                const tableRef = db.ref('mlb_live_game_state/occupiedTables/' + tableKey);
+
+                try {
+                    const result = await tableRef.transaction((currentData) => {
+                        // 若為空，或已被本裝置鎖定，允許原子交易寫入
+                        if (currentData === null || (currentData && currentData.deviceId === deviceId)) {
+                            return {
+                                deviceId: deviceId,
+                                tableNum: tableNum,
+                                time: firebase.database.ServerValue.TIMESTAMP
+                            };
+                        } else {
+                            return; // 中斷 Transaction
+                        }
+                    });
+
+                    if (result.committed) {
+                        isTableLocked.value = true;
+                        localStorage.setItem('my_locked_table', tableNum);
+                        tableRef.onDisconnect().remove(); // 離線/關閉網頁自動釋放桌號
+                        db.ref('mlb_live_game_state/systemMessage').set(`${tableFormatted} 桌已成功鎖定代表身份！`);
+                    } else {
+                        isTableLocked.value = false;
+                        alert(`⚠️ 鎖定失敗！${tableFormatted} 桌剛剛已被現場其他夥伴搶先鎖定，請選擇其他桌號！`);
+                    }
+                } catch (err) {
+                    console.error("Lock Table Error:", err);
+                    alert("連線發生錯誤，請重新嘗試！");
+                }
             };
 
             const unlockSpecificTable = (tableNum) => {
@@ -1445,12 +1523,9 @@
                 if (!window.confirm(`【主持人解鎖確認】\n確定要幫 ${tableFormatted} 桌解鎖代表身份嗎？\n解鎖後該桌手機將自動解除鎖定，並可重新選擇桌號。`)) {
                     return;
                 }
-                const index = gameState.connectedTables.indexOf(tableNum);
-                if (index > -1) {
-                    gameState.connectedTables.splice(index, 1);
-                }
-                systemMessage.value = `主持人已解除 ${tableFormatted} 桌代表鎖定！`;
-                broadcastState();
+                const tableKey = 'table_' + tableNum;
+                db.ref('mlb_live_game_state/occupiedTables/' + tableKey).remove();
+                db.ref('mlb_live_game_state/systemMessage').set(`主持人已解除 ${tableFormatted} 桌代表鎖定！`);
             };
 
             // 控制切換階段
@@ -1543,8 +1618,8 @@
 
             const getActiveTeamAvailableCards = () => {
                 const team = gameState.activeTeam;
-                const cards = team === 'red' ? gameState.redCards : gameState.blueCards;
-                return cards.filter(c => !c.used || (gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === c.id));
+                const cards = (team === 'red' ? gameState.redCards : gameState.blueCards) || [];
+                return cards.filter(c => !c.used || (gameState.activeCards && gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === c.id));
             };
 
             const confirmCardVote = (triggerNotice = true) => {
@@ -1912,6 +1987,7 @@
             const resetEntireGame = () => {
                 gameState.phase = 'LOBBY';
                 gameState.scores = { red: 0, blue: 0 };
+                gameState.occupiedTables = {};
                 gameState.connectedTables = [];
                 gameState.usedQuestionIds = [];
                 gameState.currentQuestionIndex = 0;
@@ -1969,6 +2045,8 @@
                 systemMessage,
                 currentQuestion,
                 submittedTablesCount,
+                connectedTablesCount,
+                isTableOccupied,
                 activeTeamTables,
                 categoryRemaining,
                 currentRoundNumber,
