@@ -347,7 +347,7 @@
                     <div class="grid grid-cols-5 sm:grid-cols-10 gap-4 w-full max-w-6xl mx-auto pt-4">
                         <div v-for="t in 20" :key="t" 
                              :class="[
-                                gameState.connectedTables.includes(t) ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-slate-900/90 border-slate-700 text-slate-500',
+                                isTableOccupied(t) ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-slate-900/90 border-slate-700 text-slate-500',
                                 t <= 10 ? 'hover:border-red-400' : 'hover:border-blue-400'
                              ]"
                              class="p-3 sm:p-4 border-2 rounded-2xl text-center transition flex flex-col items-center justify-center">
@@ -358,7 +358,7 @@
                             </span>
                         </div>
                     </div>
-                    <p class="text-lg sm:text-2xl text-slate-300 pt-3">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-3xl font-oswald">{{ gameState.connectedTables.length }} / 20</span> 桌</p>
+                    <p class="text-lg sm:text-2xl text-slate-300 pt-3">已完成鎖定桌數：<span class="text-emerald-400 font-bold text-3xl font-oswald">{{ connectedTablesCount }} / 20</span> 桌</p>
                 </div>
 
                 <!-- PHASE: CATEGORY_VOTE -->
@@ -1377,6 +1377,21 @@
                 return card ? card.name : '戰術卡';
             };
 
+            // 手機端作答/投票前驗證機制 (防止未鎖定或非擁有者寫入)
+            const checkMobileAuth = () => {
+                if (!isTableLocked.value) {
+                    alert('請先選擇並鎖定您的桌號，才能進行操作！');
+                    return false;
+                }
+                const tableKey = 'table_' + selectedMobileTable.value;
+                const occupant = gameState.occupiedTables ? gameState.occupiedTables[tableKey] : null;
+                if (!occupant || occupant.deviceId !== deviceId) {
+                    alert('權限驗證失敗：您當前未持有該桌號的鎖定權，請通知主持人解鎖或重新選桌！');
+                    return false;
+                }
+                return true;
+            };
+
             // 自動重置預選 Ref，確保進入新階段/新題目時不會有預設勾選
             watch(() => [gameState.phase, gameState.currentQuestionIndex, gameState.activeTeam], () => {
                 mobileSelectedCategory.value = null;
@@ -1386,12 +1401,22 @@
 
             // 監聽自己的桌號鎖定狀態：若主持人解鎖或遭釋放，自動解鎖手機 UI
             watch(() => gameState.occupiedTables, (newOccupied) => {
-                if (isTableLocked.value) {
-                    const tableKey = 'table_' + selectedMobileTable.value;
+                const storedTable = localStorage.getItem('my_locked_table');
+                if (storedTable) {
+                    const tNum = parseInt(storedTable);
+                    const tableKey = 'table_' + tNum;
                     const occupant = newOccupied ? newOccupied[tableKey] : null;
-                    if (!occupant || occupant.deviceId !== deviceId) {
+
+                    if (occupant && occupant.deviceId === deviceId) {
+                        selectedMobileTable.value = tNum;
+                        isTableLocked.value = true;
+                    } else if (!occupant && isTableLocked.value) {
                         isTableLocked.value = false;
                         localStorage.removeItem('my_locked_table');
+                    } else if (occupant && occupant.deviceId !== deviceId && isTableLocked.value) {
+                        isTableLocked.value = false;
+                        localStorage.removeItem('my_locked_table');
+                        alert(`提示：您原本鎖定的桌號已移交給其他裝置或由控台重置。`);
                     }
                 }
             }, { deep: true });
@@ -1471,7 +1496,7 @@
                 window.open(`${window.location.pathname}#${route}`, '_blank');
             };
 
-            // 玩家選桌原子事務（Transaction）鎖定防衝突與防搶桌
+            // 玩家選桌原子事務（Transaction）鎖定防衝突與防搶桌 (持久鎖定)
             const lockTable = async () => {
                 const tableNum = selectedMobileTable.value;
                 const tableKey = 'table_' + tableNum;
@@ -1506,7 +1531,6 @@
                     if (result.committed) {
                         isTableLocked.value = true;
                         localStorage.setItem('my_locked_table', tableNum);
-                        tableRef.onDisconnect().remove(); // 離線/關閉網頁自動釋放桌號
                         db.ref('mlb_live_game_state/systemMessage').set(`${tableFormatted} 桌已成功鎖定代表身份！`);
                     } else {
                         isTableLocked.value = false;
@@ -1812,9 +1836,10 @@
                 }
             };
 
-            // 手機提交答案 (含倒數進行中之硬保護)
+            // 手機提交答案 (含倒數進行中之硬保護與 Device ID 驗證)
             const submitMobileAnswer = (key) => {
                 if (!key) return;
+                if (!checkMobileAuth()) return;
                 if (!gameState.isTimerRunning || gameState.timer <= 0) {
                     alert('非倒數期間無法提交答案！');
                     return;
@@ -1828,9 +1853,10 @@
                 db.ref().update(updates);
             };
 
-            // 手機類別投票 (含倒數進行中之硬保護)
+            // 手機類別投票 (含倒數進行中之硬保護與 Device ID 驗證)
             const voteCategory = (cat) => {
                 if (!cat) return;
+                if (!checkMobileAuth()) return;
                 if (!gameState.isTimerRunning || gameState.timer <= 0) {
                     alert('非倒數期間無法送出投票！');
                     return;
@@ -1848,9 +1874,10 @@
                 db.ref().update(updates);
             };
 
-            // 手機戰術卡投票 (含倒數進行中之硬保護)
+            // 手機戰術卡投票 (含倒數進行中之硬保護與 Device ID 驗證)
             const voteCard = (cardId) => {
                 if (!cardId) return;
+                if (!checkMobileAuth()) return;
                 if (!gameState.isTimerRunning || gameState.timer <= 0) {
                     alert('非倒數期間無法送出投票！');
                     return;
@@ -2023,10 +2050,31 @@
                     isAdminAuthenticated.value = true;
                 }
 
+                // 本地鎖定復原與雲端自動接回連線
                 const storedTable = localStorage.getItem('my_locked_table');
                 if (storedTable) {
-                    selectedMobileTable.value = parseInt(storedTable);
-                    isTableLocked.value = true;
+                    const tNum = parseInt(storedTable);
+                    selectedMobileTable.value = tNum;
+                    const tableKey = 'table_' + tNum;
+                    
+                    db.ref('mlb_live_game_state/occupiedTables/' + tableKey).get().then(snapshot => {
+                        const val = snapshot.val();
+                        if (!val) {
+                            // 若雲端空缺，自動接回連線
+                            db.ref('mlb_live_game_state/occupiedTables/' + tableKey).set({
+                                deviceId: deviceId,
+                                tableNum: tNum,
+                                time: firebase.database.ServerValue.TIMESTAMP
+                            });
+                            isTableLocked.value = true;
+                        } else if (val.deviceId === deviceId) {
+                            isTableLocked.value = true;
+                        } else {
+                            // 已被其他裝置佔用
+                            localStorage.removeItem('my_locked_table');
+                            isTableLocked.value = false;
+                        }
+                    });
                 }
             });
 
